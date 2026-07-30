@@ -1,0 +1,55 @@
+name: CI / CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-contracts:
+    name: Smart Contracts Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install & Test Smart Contracts
+        run: |
+          cd contracts
+          npm install
+          npm test
+
+  test-typescript-sdk:
+    name: TypeScript SDK Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install & Test TypeScript SDK
+        run: |
+          cd sdk/typescript
+          npm install
+          npm test
+
+  test-python-sdk:
+    name: Python SDK Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install & Test Python SDK
+        run: |
+          cd sdk/python
+          uv venv
+          uv pip install -e . pytest
+          uv run pytest
