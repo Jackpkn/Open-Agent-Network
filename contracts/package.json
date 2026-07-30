@@ -3,9 +3,12 @@
   "version": "0.1.0",
   "description": "Solidity Smart Contracts for Agent Commerce Protocol (ACP)",
   "scripts": {
-    "build": "solc --base-path . src/ACPEscrow.sol || echo 'Install solc or foundry to compile contracts'"
+    "build": "hardhat compile",
+    "test": "hardhat test"
   },
   "devDependencies": {
-    "@openzeppelin/contracts": "^4.9.5"
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^4.9.5",
+    "hardhat": "^2.22.0"
   }
 }

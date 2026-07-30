@@ -2,3 +2,4 @@ httpx>=0.28.1
 web3>=7.16.0
 eth-account>=0.13.7
 pydantic>=2.13.4
+pytest>=8.0.0
