@@ -16,6 +16,9 @@ from open_agent_network import (
     AgentEndpoints,
     AgentReputation,
 )
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class CodeReviewAgent:
     def __init__(self, acp_client: ACPClient):

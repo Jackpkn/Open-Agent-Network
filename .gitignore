@@ -15,7 +15,9 @@ out/
 cache/
 artifacts/
 
-# OS / IDE
+# OS / IDE / Secrets
+.env
+.env.*
 .DS_Store
 .vscode/
 .idea/

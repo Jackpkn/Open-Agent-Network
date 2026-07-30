@@ -4,6 +4,11 @@ End-to-End Demo: Open Agent Network + Google Gemini / Anthropic Claude Code Revi
 
 import asyncio
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv()
+
 from open_agent_network import ACPClient
 from code_review_agent.agent import CodeReviewAgent
 
