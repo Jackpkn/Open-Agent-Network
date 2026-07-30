@@ -104,31 +104,30 @@ Respond STRICTLY with a valid JSON object matching this exact schema:
 }}
 """
         if self.provider == "gemini":
-            try:
-                response = self.gemini_client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=prompt,
-                )
-            except Exception:
-                response = self.gemini_client.models.generate_content(
-                    model="gemini-1.5-flash",
-                    contents=prompt,
-                )
-            content = response.text
+            gemini_models = ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
+            for model_name in gemini_models:
+                try:
+                    response = self.gemini_client.models.generate_content(
+                        model=model_name,
+                        contents=prompt,
+                    )
+                    content = response.text
+                    break
+                except Exception:
+                    continue
         elif self.provider == "claude":
-            try:
-                response = await self.anthropic_client.messages.create(
-                    model="claude-3-7-sonnet-20250219",
-                    max_tokens=1024,
-                    messages=[{"role": "user", "content": prompt}],
-                )
-            except Exception:
-                response = await self.anthropic_client.messages.create(
-                    model="claude-3-5-sonnet-20241022",
-                    max_tokens=1024,
-                    messages=[{"role": "user", "content": prompt}],
-                )
-            content = response.content[0].text
+            claude_models = ["claude-sonnet-5", "claude-3-7-sonnet-20250219", "claude-3-5-sonnet-20241022"]
+            for model_name in claude_models:
+                try:
+                    response = await self.anthropic_client.messages.create(
+                        model=model_name,
+                        max_tokens=1024,
+                        messages=[{"role": "user", "content": prompt}],
+                    )
+                    content = response.content[0].text
+                    break
+                except Exception:
+                    continue
         else:
             return {
                 "overall_score": 4.8,
