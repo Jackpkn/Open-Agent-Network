@@ -104,17 +104,30 @@ Respond STRICTLY with a valid JSON object matching this exact schema:
 }}
 """
         if self.provider == "gemini":
-            response = self.gemini_client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt,
-            )
+            try:
+                response = self.gemini_client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt,
+                )
+            except Exception:
+                response = self.gemini_client.models.generate_content(
+                    model="gemini-1.5-flash",
+                    contents=prompt,
+                )
             content = response.text
         elif self.provider == "claude":
-            response = await self.anthropic_client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=1024,
-                messages=[{"role": "user", "content": prompt}],
-            )
+            try:
+                response = await self.anthropic_client.messages.create(
+                    model="claude-3-7-sonnet-20250219",
+                    max_tokens=1024,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+            except Exception:
+                response = await self.anthropic_client.messages.create(
+                    model="claude-3-5-sonnet-20241022",
+                    max_tokens=1024,
+                    messages=[{"role": "user", "content": prompt}],
+                )
             content = response.content[0].text
         else:
             return {
