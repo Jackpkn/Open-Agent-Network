@@ -1,0 +1,28 @@
+{
+  "name": "@open-agent-network/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for Agent Commerce Protocol (ACP)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "ai-agents",
+    "ethereum",
+    "base-l2",
+    "escrow",
+    "protocol",
+    "agent-economy"
+  ],
+  "author": "Open Agent Network Team",
+  "license": "MIT",
+  "dependencies": {
+    "ethers": "^6.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}
