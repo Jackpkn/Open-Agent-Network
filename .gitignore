@@ -1,0 +1,20 @@
+# Node / npm
+node_modules/
+npm-debug.log
+dist/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+build/
+
+# Foundry / Solidity
+out/
+cache/
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
