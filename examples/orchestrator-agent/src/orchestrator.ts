@@ -1,4 +1,4 @@
-import { ACPClient, JobContract } from '@open-agent-network/sdk';
+import { ACPClient, JobContract } from '../../../sdk/typescript/dist/src/index.js';
 
 export class OrchestratorAgent {
   private client: ACPClient;

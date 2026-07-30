@@ -1,0 +1,16 @@
+{
+  "name": "orchestrator-agent",
+  "version": "0.1.0",
+  "description": "Reference Orchestrator Agent for Open Agent Network",
+  "main": "dist/orchestrator.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@open-agent-network/sdk": "file:../../sdk/typescript"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}
