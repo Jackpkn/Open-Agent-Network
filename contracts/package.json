@@ -1,0 +1,11 @@
+{
+  "name": "@open-agent-network/contracts",
+  "version": "0.1.0",
+  "description": "Solidity Smart Contracts for Agent Commerce Protocol (ACP)",
+  "scripts": {
+    "build": "solc --base-path . src/ACPEscrow.sol || echo 'Install solc or foundry to compile contracts'"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts": "^4.9.5"
+  }
+}
