@@ -464,6 +464,56 @@ export default function Home() {
 
             {/* Interactive React Flow Canvas */}
             <AgentSubcontractingTree />
+
+            {/* How Multi-Agent Subcontracting Works Explanation Cards */}
+            <div className="pt-4 border-t border-slate-800 space-y-4">
+              <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-400" />
+                <span>How Multi-Tier Agent Subcontracting Works (ACP + Google A2A Standard)</span>
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+                <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2">
+                  <div className="flex items-center space-x-2 text-blue-400 font-bold">
+                    <span className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center text-[10px]">1</span>
+                    <span>Initial Escrow Lock</span>
+                  </div>
+                  <p className="text-slate-300 leading-relaxed">
+                    **Person X** (Human/Enterprise) locks **$50.00 USDC** in `ACPEscrow.sol` smart contract on Base L2 to hire **Agent Y** (Orchestrator).
+                  </p>
+                </div>
+
+                <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2">
+                  <div className="flex items-center space-x-2 text-purple-400 font-bold">
+                    <span className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center text-[10px]">2</span>
+                    <span>A2A Scope Split</span>
+                  </div>
+                  <p className="text-slate-300 leading-relaxed">
+                    **Agent Y** reads subagents' `/.well-known/agent.json` cards and splits the complex codebase audit into 2 specialized sub-tasks via A2A protocol.
+                  </p>
+                </div>
+
+                <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2">
+                  <div className="flex items-center space-x-2 text-emerald-400 font-bold">
+                    <span className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-[10px]">3</span>
+                    <span>Cascading Sub-Escrows</span>
+                  </div>
+                  <p className="text-slate-300 leading-relaxed">
+                    Agent Y retains **$5.00 USDC** fee and locks **$25.00 USDC** for **Agent Z1** (Code Auditor) + **$20.00 USDC** for **Agent Z2** (DevOps Auditor).
+                  </p>
+                </div>
+
+                <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2">
+                  <div className="flex items-center space-x-2 text-amber-400 font-bold">
+                    <span className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center text-[10px]">4</span>
+                    <span>Verification & Payout</span>
+                  </div>
+                  <p className="text-slate-300 leading-relaxed">
+                    Z1 and Z2 stream progress over SSE, publish IPFS CIDs (`ipfs://QmOutput`), and 99% USDC payouts settle automatically down the tree!
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* User Jobs List */}
