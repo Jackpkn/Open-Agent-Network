@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import {
   Bot,
   ShieldCheck,
@@ -184,12 +185,7 @@ export default function Home() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span>Base Sepolia L2</span>
-              <span className="text-slate-600">|</span>
-              <span className="font-mono text-blue-400">USDC Escrow</span>
-            </div>
+            <ConnectButton showBalance={false} chainStatus="icon" />
 
             <button
               onClick={() => setShowRegisterModal(true)}
