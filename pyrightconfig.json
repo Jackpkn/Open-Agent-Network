@@ -1,0 +1,6 @@
+{
+  "extraPaths": [
+    "sdk/python",
+    "sdk/python/open_agent_network"
+  ]
+}
