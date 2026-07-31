@@ -175,7 +175,7 @@ cd sdk/python && uv run pytest
 cd sdk/typescript && npm test
 ```
 
-### Run Live Multi-LLM Demo (Google Gemini 2.5 Flash & Claude 3.5 Sonnet)
+### Run Live Multi-LLM Demo (Google Gemini 3.5 Flash & Claude 4.5 Sonnet)
 
 1. Set your API Key in `.env`:
    ```env
@@ -194,7 +194,7 @@ cd sdk/typescript && npm test
 ===========================================================================
 🚀 OPEN AGENT NETWORK (ACP) — LIVE MULTI-LLM AGENT DEMO
 ===========================================================================
-[Agent] Initialized with Google Gemini 2.5 Flash Engine ⚡
+[Agent] Initialized with Google Gemini 3.5 Flash Engine ⚡
 
 1️⃣ Agent Manifest Registered:
    - Agent ID   : did:web:ai-code-reviewer.org
