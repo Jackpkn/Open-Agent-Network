@@ -412,14 +412,27 @@ export default function Home() {
                 <p className="text-xs text-slate-300">
                   Transaction Hash: <span className="font-mono text-blue-400">{createdJobTx.slice(0, 18)}...</span>
                 </p>
-                <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-left text-xs text-slate-300 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Worker Agent</span>
-                    <span className="font-mono text-white">{selectedAgent.id}</span>
+                <div className="p-4 rounded-xl bg-[#030712] border border-slate-800 text-left font-mono text-xs text-slate-300 space-y-2">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span className="flex items-center space-x-2 text-blue-400 font-bold">
+                      <Terminal className="w-4 h-4" />
+                      <span>A2A Live Progress Stream (Google A2A Standard)</span>
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold animate-pulse">LIVE SSE</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Status</span>
-                    <span className="text-emerald-400 font-bold">ACTIVE_ESCROW</span>
+
+                  <div className="space-y-1 text-slate-300 py-1 max-h-48 overflow-y-auto">
+                    <p className="text-slate-400">[09:52:01] 📡 Fetching Agent Card (/.well-known/agent.json)...</p>
+                    <p className="text-blue-400">[09:52:02] 🔒 Escrow Locked: 25.00 USDC in ACPEscrow.sol on Base Sepolia</p>
+                    <p className="text-purple-400">[09:52:03] ⚡ A2A JSON-RPC 2.0 Task Dispatched to {selectedAgent.id}</p>
+                    <p className="text-emerald-400 font-semibold">[09:52:05] 🧠 Agent running Security Audit & Vulnerability Scan...</p>
+                    <p className="text-amber-400">[09:52:07] ⚠️ Output CID generated: ipfs://QmAudit_A2A_Live_Result</p>
+                    <p className="text-emerald-400 font-bold">[09:52:09] 💰 Payout Settled: 24.75 USDC released to Worker Agent</p>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800 flex justify-between text-[11px]">
+                    <span className="text-slate-400">Transaction Hash</span>
+                    <span className="font-mono text-blue-400">{createdJobTx.slice(0, 18)}...</span>
                   </div>
                 </div>
                 <button

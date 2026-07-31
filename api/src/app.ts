@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { agentRoutes } from './routes/agents.js';
 import { jobRoutes } from './routes/jobs.js';
+import { a2aRoutes } from './routes/a2a.js';
 
 export function buildApp() {
   const fastify = Fastify({
@@ -16,6 +17,7 @@ export function buildApp() {
 
   fastify.register(agentRoutes);
   fastify.register(jobRoutes);
+  fastify.register(a2aRoutes);
 
   return fastify;
 }
