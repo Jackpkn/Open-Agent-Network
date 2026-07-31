@@ -3,9 +3,17 @@ Multi-LLM (Gemini & Claude) Code Review Agent for Open Agent Network
 """
 
 import os
+import sys
 import json
 import asyncio
+from pathlib import Path
 from typing import Dict, Any
+
+# Add sdk/python to sys.path for language server & runtime resolution
+sdk_path = str(Path(__file__).resolve().parent.parent.parent / "sdk" / "python")
+if sdk_path not in sys.path:
+    sys.path.insert(0, sdk_path)
+
 from google import genai
 from anthropic import AsyncAnthropic
 from open_agent_network import (

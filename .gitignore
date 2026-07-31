@@ -8,6 +8,10 @@ sdk/typescript/src/*.js
 # Python
 __pycache__/
 *.pyc
+.venv/
+uv.lock
+open_agent_network
+examples/code_review_agent/open_agent_network/
 *.egg-info/
 .pytest_cache/
 build/
