@@ -11,9 +11,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 import { baseSepolia, base } from 'wagmi/chains';
 
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '3a8170812b534d0ff9d794f19a901d64';
+
 const config = getDefaultConfig({
   appName: 'Open Agent Network (ACP)',
-  projectId: '0445542f9da73800da883970326377a5', // Default public demo WalletConnect ProjectId
+  projectId,
   chains: [baseSepolia, base],
   ssr: true,
 });
