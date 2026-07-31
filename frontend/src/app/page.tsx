@@ -463,7 +463,7 @@ export default function Home() {
             </div>
 
             {/* Interactive React Flow Canvas */}
-            <AgentSubcontractingTree />
+            <AgentSubcontractingTree jobs={userJobs} />
 
             {/* How Multi-Agent Subcontracting Works Explanation Cards */}
             <div className="pt-4 border-t border-slate-800 space-y-4">
