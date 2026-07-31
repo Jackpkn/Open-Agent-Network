@@ -21,6 +21,10 @@ import {
   ChevronRight,
   Layers,
   Terminal,
+  Activity,
+  Check,
+  Clock,
+  FileCode,
 } from 'lucide-react';
 
 interface Agent {
@@ -38,6 +42,19 @@ interface Agent {
   latencySeconds: number;
   verificationMethod: string;
   ownerDid: string;
+}
+
+interface ActiveJob {
+  id: string;
+  workerName: string;
+  workerDid: string;
+  skillId: string;
+  description: string;
+  amountUsdc: string;
+  status: 'ACTIVE_ESCROW' | 'SUBMITTED' | 'COMPLETED';
+  outputCid?: string;
+  txHash: string;
+  createdAt: string;
 }
 
 const MOCK_AGENTS: Agent[] = [
@@ -123,12 +140,41 @@ const MOCK_AGENTS: Agent[] = [
   },
 ];
 
+const INITIAL_JOBS: ActiveJob[] = [
+  {
+    id: 'job-9821',
+    workerName: 'Claude Code Auditor',
+    workerDid: 'did:web:claude-reviewer.ai',
+    skillId: 'code-review',
+    description: 'Audit smart contract deposit function for reentrancy and SQL injection',
+    amountUsdc: '25.00',
+    status: 'SUBMITTED',
+    outputCid: 'ipfs://QmAudit_Gemini_Flash_Result_9821',
+    txHash: '0x8f192b49c71a39b2e04f98120d04b82109283719402910485918239014859102',
+    createdAt: '10 mins ago',
+  },
+  {
+    id: 'job-9820',
+    workerName: 'Alpha Quant Analyst',
+    workerDid: 'did:web:alpha-quant.io',
+    skillId: 'market-analysis',
+    description: 'Calculate 30-day volatility index for Base L2 DEX liquidity pools',
+    amountUsdc: '45.00',
+    status: 'COMPLETED',
+    outputCid: 'ipfs://QmQuantReport_BaseL2_Pools_9820',
+    txHash: '0x3a4b910247859102847591024875910248759102487591024875910248759102',
+    createdAt: '1 hour ago',
+  },
+];
+
 export default function Home() {
+  const [activeTab, setActiveTab] = useState<'marketplace' | 'jobs'>('marketplace');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [showHireModal, setShowHireModal] = useState<boolean>(false);
   const [showRegisterModal, setShowRegisterModal] = useState<boolean>(false);
+  const [userJobs, setUserJobs] = useState<ActiveJob[]>(INITIAL_JOBS);
 
   // Escrow Form State
   const [taskDescription, setTaskDescription] = useState<string>('');
@@ -165,6 +211,22 @@ export default function Home() {
     const mockTx = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
     setCreatedJobTx(mockTx);
     setJobCreated(true);
+
+    if (selectedAgent) {
+      const newJob: ActiveJob = {
+        id: `job-${Date.now().toString().slice(-4)}`,
+        workerName: selectedAgent.name,
+        workerDid: selectedAgent.id,
+        skillId: selectedAgent.skillId,
+        description: taskDescription || `Execute ${selectedAgent.skillName}`,
+        amountUsdc: selectedAgent.pricing,
+        status: 'SUBMITTED',
+        outputCid: `ipfs://QmAudit_A2A_Output_${Date.now().toString().slice(-4)}`,
+        txHash: mockTx,
+        createdAt: 'Just now',
+      };
+      setUserJobs([newJob, ...userJobs]);
+    }
   };
 
   return (
@@ -172,16 +234,46 @@ export default function Home() {
       {/* Navigation Header */}
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-[#07090e]/80 border-b border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl gradient-blue flex items-center justify-center pulse-glow">
-              <Bot className="w-6 h-6 text-white" />
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl gradient-blue flex items-center justify-center pulse-glow">
+                <Bot className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <span className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                  Open Agent Network <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">ACP v0.1</span>
+                </span>
+                <p className="text-xs text-slate-400">Autonomous AI Agent Labor & Escrow Protocol</p>
+              </div>
             </div>
-            <div>
-              <span className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                Open Agent Network <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">ACP v0.1</span>
-              </span>
-              <p className="text-xs text-slate-400">Autonomous AI Agent Labor & Escrow Protocol</p>
-            </div>
+
+            {/* Navigation Tabs Switcher */}
+            <nav className="hidden md:flex items-center space-x-1 p-1 rounded-xl bg-slate-900/80 border border-slate-800">
+              <button
+                onClick={() => setActiveTab('marketplace')}
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === 'marketplace'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                🛒 Agent Marketplace
+              </button>
+              <button
+                onClick={() => setActiveTab('jobs')}
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 ${
+                  activeTab === 'jobs'
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Activity className="w-3.5 h-3.5" />
+                <span>Active Jobs & Escrows</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  {userJobs.length}
+                </span>
+              </button>
+            </nav>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -198,151 +290,243 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero Banner */}
-      <section className="relative overflow-hidden py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800/50">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-64 bg-blue-600/10 blur-[120px] rounded-full pointer-events-none"></div>
+      {/* Main Tab Views */}
+      {activeTab === 'marketplace' ? (
+        <>
+          {/* Hero Banner */}
+          <section className="relative overflow-hidden py-14 px-4 sm:px-6 lg:px-8 border-b border-slate-800/50">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-64 bg-blue-600/10 blur-[120px] rounded-full pointer-events-none"></div>
 
-        <div className="max-w-4xl mx-auto text-center space-y-6 relative z-10">
-          <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium">
-            <Sparkles className="w-4 h-4" />
-            <span>Universal AI Subcontracting & Settlement Layer</span>
+            <div className="max-w-4xl mx-auto text-center space-y-6 relative z-10">
+              <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium">
+                <Sparkles className="w-4 h-4" />
+                <span>Google A2A Protocol Standard & Base L2 USDC Settlement</span>
+              </div>
+
+              <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
+                Hire & Subcontract Any <br />
+                <span className="gradient-text">Autonomous AI Agent</span>
+              </h1>
+
+              <p className="text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
+                Lock USDC escrows on **Base L2**, stream real-time task progress via **A2A Server-Sent Events**, and settle output CIDs automatically.
+              </p>
+
+              {/* Protocol Metrics */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 max-w-3xl mx-auto">
+                <div className="glass-panel p-4 rounded-2xl text-center">
+                  <p className="text-2xl font-bold text-white">$142.5K</p>
+                  <p className="text-xs text-slate-400">Total USDC Settled</p>
+                </div>
+                <div className="glass-panel p-4 rounded-2xl text-center">
+                  <p className="text-2xl font-bold text-blue-400">1,240+</p>
+                  <p className="text-xs text-slate-400">Jobs Completed</p>
+                </div>
+                <div className="glass-panel p-4 rounded-2xl text-center">
+                  <p className="text-2xl font-bold text-emerald-400">99.2%</p>
+                  <p className="text-xs text-slate-400">Success Rate</p>
+                </div>
+                <div className="glass-panel p-4 rounded-2xl text-center">
+                  <p className="text-2xl font-bold text-purple-400">&lt; $0.001</p>
+                  <p className="text-xs text-slate-400">Base L2 Gas Fee</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Marketplace Section */}
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+              <div className="flex items-center space-x-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+                {[
+                  { id: 'all', label: 'All Agents', icon: Layers },
+                  { id: 'software', label: 'Software & DevOps', icon: Code2 },
+                  { id: 'finance', label: 'Finance & Analytics', icon: TrendingUp },
+                  { id: 'creative', label: 'Content & Media', icon: FileText },
+                  { id: 'science', label: 'Science & Research', icon: Microscope },
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeCategory === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveCategory(tab.id)}
+                      className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all whitespace-nowrap ${
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
+                          : 'bg-slate-900/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 border border-slate-800'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="relative w-full md:w-80">
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search by skill, capability..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredAgents.map((agent) => (
+                <div key={agent.id} className="glass-panel glass-panel-hover rounded-2xl p-6 flex flex-col justify-between space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-md border border-blue-500/20">
+                          {agent.skillId}
+                        </span>
+                        <h3 className="text-lg font-bold text-white pt-2">{agent.name}</h3>
+                        <p className="text-xs text-slate-400 font-mono">{agent.id}</p>
+                      </div>
+                      <div className="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300">
+                        <Bot className="w-5 h-5" />
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-slate-300 line-clamp-3 leading-relaxed">{agent.description}</p>
+
+                    <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
+                      <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                        <p className="text-slate-400">Success</p>
+                        <p className="font-bold text-emerald-400">{agent.successRate}%</p>
+                      </div>
+                      <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                        <p className="text-slate-400">Stake</p>
+                        <p className="font-bold text-white">${agent.stakeUsdc}</p>
+                      </div>
+                      <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                        <p className="text-slate-400">Latency</p>
+                        <p className="font-bold text-purple-400">{agent.latencySeconds}s</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-slate-400">Price per Job</p>
+                      <p className="text-xl font-extrabold text-white">
+                        ${agent.pricing} <span className="text-xs font-normal text-slate-400">USDC</span>
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => handleHireClick(agent)}
+                      className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm transition-all shadow-md shadow-blue-500/20"
+                    >
+                      <Lock className="w-4 h-4" />
+                      <span>Hire Agent</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </main>
+        </>
+      ) : (
+        /* Active Jobs & Escrows Tracker View */
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-6">
+            <div>
+              <h2 className="text-3xl font-extrabold text-white">Active Jobs & Escrows Tracker</h2>
+              <p className="text-sm text-slate-400">Track on-chain USDC escrows, A2A outputs, and milestone releases on Base Sepolia L2</p>
+            </div>
+
+            <button
+              onClick={() => setActiveTab('marketplace')}
+              className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-sm font-semibold hover:bg-slate-800"
+            >
+              <span>+ Hire Another Agent</span>
+            </button>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
-            Hire & Subcontract Any <br />
-            <span className="gradient-text">Autonomous AI Agent</span>
-          </h1>
-
-          <p className="text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Lock USDC escrows on **Base L2**, execute verifiable task payloads across software, finance, creative, or scientific domains, and settle automatically via smart contracts.
-          </p>
-
-          {/* Protocol Metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-8 max-w-3xl mx-auto">
-            <div className="glass-panel p-4 rounded-2xl text-center">
-              <p className="text-2xl font-bold text-white">$142.5K</p>
-              <p className="text-xs text-slate-400">Total USDC Settled</p>
-            </div>
-            <div className="glass-panel p-4 rounded-2xl text-center">
-              <p className="text-2xl font-bold text-blue-400">1,240+</p>
-              <p className="text-xs text-slate-400">Jobs Completed</p>
-            </div>
-            <div className="glass-panel p-4 rounded-2xl text-center">
-              <p className="text-2xl font-bold text-emerald-400">99.2%</p>
-              <p className="text-xs text-slate-400">Success Rate</p>
-            </div>
-            <div className="glass-panel p-4 rounded-2xl text-center">
-              <p className="text-2xl font-bold text-purple-400">&lt; $0.001</p>
-              <p className="text-xs text-slate-400">Base L2 Gas Fee</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Marketplace Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Search & Filter Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          {/* Category Tabs */}
-          <div className="flex items-center space-x-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
-            {[
-              { id: 'all', label: 'All Agents', icon: Layers },
-              { id: 'software', label: 'Software & DevOps', icon: Code2 },
-              { id: 'finance', label: 'Finance & Analytics', icon: TrendingUp },
-              { id: 'creative', label: 'Content & Media', icon: FileText },
-              { id: 'science', label: 'Science & Research', icon: Microscope },
-            ].map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeCategory === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveCategory(tab.id)}
-                  className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all whitespace-nowrap ${
-                    isActive
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
-                      : 'bg-slate-900/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 border border-slate-800'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Search Box */}
-          <div className="relative w-full md:w-80">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by skill, capability..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
-            />
-          </div>
-        </div>
-
-        {/* Agent Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredAgents.map((agent) => (
-            <div key={agent.id} className="glass-panel glass-panel-hover rounded-2xl p-6 flex flex-col justify-between space-y-6">
-              <div className="space-y-4">
-                {/* Header Badge & Name */}
-                <div className="flex items-start justify-between">
+          {/* User Jobs List */}
+          <div className="space-y-4">
+            {userJobs.map((job) => (
+              <div key={job.id} className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
                   <div className="space-y-1">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-md border border-blue-500/20">
-                      {agent.skillId}
+                    <div className="flex items-center space-x-3">
+                      <span className="font-mono text-sm font-bold text-blue-400">{job.id}</span>
+                      <span className="text-xs px-2.5 py-0.5 rounded-md font-semibold bg-blue-500/10 text-blue-300 border border-blue-500/20 uppercase">
+                        {job.skillId}
+                      </span>
+                      <span
+                        className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${
+                          job.status === 'SUBMITTED'
+                            ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                            : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                        }`}
+                      >
+                        {job.status === 'SUBMITTED' ? '⚡ WORK SUBMITTED' : '✅ SETTLED'}
+                      </span>
+                    </div>
+                    <h4 className="text-lg font-bold text-white pt-1">{job.description}</h4>
+                    <p className="text-xs text-slate-400">
+                      Worker Agent: <span className="font-mono text-slate-200">{job.workerName} ({job.workerDid})</span>
+                    </p>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="text-xs text-slate-400">Escrow Locked</p>
+                    <p className="text-2xl font-extrabold text-white">
+                      ${job.amountUsdc} <span className="text-xs font-normal text-slate-400">USDC</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Output CID & Contract details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+                  <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-1">
+                    <p className="text-slate-500 font-sans text-[11px]">IPFS Output CID</p>
+                    <p className="text-blue-400 font-bold flex items-center space-x-1 truncate">
+                      <FileCode className="w-3.5 h-3.5 shrink-0" />
+                      <span>{job.outputCid}</span>
+                    </p>
+                  </div>
+                  <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-1">
+                    <p className="text-slate-500 font-sans text-[11px]">Base Sepolia Tx Hash</p>
+                    <p className="text-slate-300 font-bold truncate">{job.txHash}</p>
+                  </div>
+                </div>
+
+                {/* Release Payout CTA */}
+                <div className="flex items-center justify-between pt-2">
+                  <span className="text-xs text-slate-500">Created {job.createdAt}</span>
+
+                  {job.status === 'SUBMITTED' ? (
+                    <button
+                      onClick={() => {
+                        const updated = userJobs.map((j) => (j.id === job.id ? { ...j, status: 'COMPLETED' as const } : j));
+                        setUserJobs(updated);
+                        alert(`Escrow payout of $${job.amountUsdc} USDC released to ${job.workerName}!`);
+                      }}
+                      className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-md shadow-emerald-500/20"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>Verify & Release Payout ($24.75 USDC)</span>
+                    </button>
+                  ) : (
+                    <span className="text-xs font-bold text-emerald-400 flex items-center space-x-1">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Payout Settled to Worker Wallet</span>
                     </span>
-                    <h3 className="text-lg font-bold text-white pt-2">{agent.name}</h3>
-                    <p className="text-xs text-slate-400 font-mono">{agent.id}</p>
-                  </div>
-                  <div className="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300">
-                    <Bot className="w-5 h-5" />
-                  </div>
-                </div>
-
-                <p className="text-sm text-slate-300 line-clamp-3 leading-relaxed">{agent.description}</p>
-
-                {/* Metrics Badges */}
-                <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
-                  <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                    <p className="text-slate-400">Success</p>
-                    <p className="font-bold text-emerald-400">{agent.successRate}%</p>
-                  </div>
-                  <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                    <p className="text-slate-400">Stake</p>
-                    <p className="font-bold text-white">${agent.stakeUsdc}</p>
-                  </div>
-                  <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                    <p className="text-slate-400">Latency</p>
-                    <p className="font-bold text-purple-400">{agent.latencySeconds}s</p>
-                  </div>
+                  )}
                 </div>
               </div>
-
-              {/* Action & Pricing */}
-              <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-slate-400">Price per Job</p>
-                  <p className="text-xl font-extrabold text-white">
-                    ${agent.pricing} <span className="text-xs font-normal text-slate-400">USDC</span>
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => handleHireClick(agent)}
-                  className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm transition-all shadow-md shadow-blue-500/20"
-                >
-                  <Lock className="w-4 h-4" />
-                  <span>Hire Agent</span>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </main>
+            ))}
+          </div>
+        </main>
+      )}
 
       {/* Hire Escrow Modal */}
       {showHireModal && selectedAgent && (
@@ -409,9 +593,7 @@ export default function Home() {
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
                 <h4 className="text-lg font-bold text-white">Escrow Locked & Job Dispatched!</h4>
-                <p className="text-xs text-slate-300">
-                  Transaction Hash: <span className="font-mono text-blue-400">{createdJobTx.slice(0, 18)}...</span>
-                </p>
+
                 <div className="p-4 rounded-xl bg-[#030712] border border-slate-800 text-left font-mono text-xs text-slate-300 space-y-2">
                   <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                     <span className="flex items-center space-x-2 text-blue-400 font-bold">
@@ -435,12 +617,18 @@ export default function Home() {
                     <span className="font-mono text-blue-400">{createdJobTx.slice(0, 18)}...</span>
                   </div>
                 </div>
-                <button
-                  onClick={() => setShowHireModal(false)}
-                  className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-semibold text-white text-sm"
-                >
-                  Close Monitor
-                </button>
+
+                <div className="flex items-center space-x-3 pt-2">
+                  <button
+                    onClick={() => {
+                      setShowHireModal(false);
+                      setActiveTab('jobs');
+                    }}
+                    className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white text-sm"
+                  >
+                    View in Active Jobs Tracker
+                  </button>
+                </div>
               </div>
             )}
           </div>
