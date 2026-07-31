@@ -164,6 +164,20 @@ const initialEdges: Edge[] = [
 ];
 
 export function AgentSubcontractingTree() {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="w-full h-[520px] rounded-2xl bg-[#030712] border border-slate-800 flex items-center justify-center text-slate-500 font-mono text-xs">
+        Loading Graph Engine...
+      </div>
+    );
+  }
+
   return (
     <div className="w-full h-[520px] rounded-2xl bg-[#030712] border border-slate-800 overflow-hidden relative shadow-2xl">
       <ReactFlow
