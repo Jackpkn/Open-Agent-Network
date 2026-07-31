@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { AgentSubcontractingTree } from '../components/AgentSubcontractingTree';
 import {
   Bot,
   ShieldCheck,
@@ -450,89 +451,19 @@ export default function Home() {
           </div>
 
           {/* Multi-Agent Subcontracting Tree Visualizer */}
-          <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6">
+          <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div>
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  <span>🌳 Real-Time Multi-Tier Agent Subcontracting Tree</span>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">A2A Cascading Escrow</span>
+                  <span>🌳 Real-Time Interactive Multi-Tier Agent Subcontracting Graph</span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">React Flow + A2A Cascading Escrow</span>
                 </h3>
-                <p className="text-xs text-slate-400">Visualization of Person X hiring Agent Y, and Agent Y subcontracting Agent Z1 & Z2</p>
+                <p className="text-xs text-slate-400">Drag, zoom, and inspect Person X hiring Agent Y, and Agent Y subcontracting Agent Z1 & Z2 in real-time</p>
               </div>
             </div>
 
-            {/* Tree Flow Visualizer */}
-            <div className="bg-[#030712] p-6 rounded-xl border border-slate-800 space-y-6">
-              {/* Root Level: Hirer Person X */}
-              <div className="flex items-center space-x-4 bg-blue-500/10 p-4 rounded-xl border border-blue-500/20">
-                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-sm">
-                  HX
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <p className="font-bold text-white text-sm">Hirer (Human / Enterprise X)</p>
-                    <p className="font-mono text-xs font-bold text-emerald-400">Locked $50.00 USDC</p>
-                  </div>
-                  <p className="text-xs text-slate-400">Target Task: Audit Enterprise Monolith Repo & Infrastructure</p>
-                </div>
-              </div>
-
-              {/* Connector Line */}
-              <div className="flex justify-center -my-2">
-                <div className="w-0.5 h-6 bg-slate-700"></div>
-              </div>
-
-              {/* Tier 1: Main Orchestrator Agent Y */}
-              <div className="flex items-center space-x-4 bg-purple-500/10 p-4 rounded-xl border border-purple-500/20 ml-6">
-                <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center font-bold text-white text-sm">
-                  AY
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <p className="font-bold text-white text-sm">Agent Y (Orchestrator Agent)</p>
-                    <p className="font-mono text-xs text-slate-300">Retains $5.00 | Subcontracts $45.00</p>
-                  </div>
-                  <p className="text-xs text-slate-400">DID: did:web:orchestrator-y.org | Splitting scope into sub-tasks via A2A protocol</p>
-                </div>
-              </div>
-
-              {/* Branching Connector Lines */}
-              <div className="grid grid-cols-2 gap-4 ml-12">
-                <div className="flex justify-center -my-2">
-                  <div className="w-0.5 h-6 bg-slate-700"></div>
-                </div>
-                <div className="flex justify-center -my-2">
-                  <div className="w-0.5 h-6 bg-slate-700"></div>
-                </div>
-              </div>
-
-              {/* Tier 2 Subagents Z1 and Z2 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-12">
-                <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-blue-400 text-xs flex items-center space-x-1">
-                      <Code2 className="w-3.5 h-3.5" />
-                      <span>Agent Z1 (Code Auditor)</span>
-                    </span>
-                    <span className="font-mono text-xs text-emerald-400 font-bold">$25.00 USDC</span>
-                  </div>
-                  <p className="text-[11px] text-slate-300">Task: Security audit of backend python code</p>
-                  <p className="text-[10px] text-purple-400 font-mono">Status: A2A SSE Progress 100% | CID: ipfs://QmAuditZ1</p>
-                </div>
-
-                <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-purple-400 text-xs flex items-center space-x-1">
-                      <Terminal className="w-3.5 h-3.5" />
-                      <span>Agent Z2 (DevOps Sentinel)</span>
-                    </span>
-                    <span className="font-mono text-xs text-emerald-400 font-bold">$20.00 USDC</span>
-                  </div>
-                  <p className="text-[11px] text-slate-300">Task: Audit Terraform & Kubernetes manifests</p>
-                  <p className="text-[10px] text-purple-400 font-mono">Status: A2A SSE Progress 100% | CID: ipfs://QmAuditZ2</p>
-                </div>
-              </div>
-            </div>
+            {/* Interactive React Flow Canvas */}
+            <AgentSubcontractingTree />
           </div>
 
           {/* User Jobs List */}
