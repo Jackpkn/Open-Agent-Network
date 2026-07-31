@@ -49,6 +49,20 @@ jobs:
           npm install
           npm test
 
+  build-frontend:
+    name: Next.js Frontend Web Portal Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install & Build Next.js Frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
   test-python-sdk:
     name: Python SDK Test Suite
     runs-on: ubuntu-latest
