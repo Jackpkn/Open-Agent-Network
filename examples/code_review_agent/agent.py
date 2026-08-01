@@ -133,8 +133,12 @@ Respond STRICTLY with a valid JSON object matching this exact schema:
                         messages=[{"role": "user", "content": prompt}],
                     )
                     if response and response.content:
-                        content = response.content[0].text
-                        break
+                        for block in response.content:
+                            if getattr(block, "type", None) == "text" and hasattr(block, "text"):
+                                content = str(block.text)
+                                break
+                        if content:
+                            break
                 except Exception:
                     continue
 
