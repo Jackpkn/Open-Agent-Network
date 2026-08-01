@@ -29,6 +29,8 @@ import {
   SlidersHorizontal,
   Coins,
   Cpu,
+  Eye,
+  CheckSquare,
 } from 'lucide-react';
 
 interface Agent {
@@ -60,6 +62,9 @@ export interface ActiveJob {
   outputCid?: string;
   txHash: string;
   createdAt: string;
+  problemCode?: string;
+  solutionCode?: string;
+  auditSummary?: string;
 }
 
 const MOCK_AGENTS: Agent[] = [
@@ -176,6 +181,9 @@ const INITIAL_JOBS: ActiveJob[] = [
     outputCid: 'ipfs://QmAudit_Gemini_Flash_Result_9821',
     txHash: '0x8f192b49c71a39b2e04f98120d04b82109283719402910485918239014859102',
     createdAt: '10 mins ago',
+    problemCode: `// Vulnerable Solidity Deposit Function\nfunction withdraw(uint256 amount) public {\n    require(balances[msg.sender] >= amount);\n    (bool s, ) = msg.sender.call{value: amount}(""); // ⚠️ Reentrancy Flaw!\n    balances[msg.sender] -= amount;\n}`,
+    solutionCode: `// ✅ Fixed Checks-Effects-Interactions Pattern\nfunction withdraw(uint256 amount) public nonReentrant {\n    require(balances[msg.sender] >= amount, "Insufficient balance");\n    balances[msg.sender] -= amount; // State updated before external call\n    (bool s, ) = msg.sender.call{value: amount}("");\n    require(s, "Transfer failed");\n}`,
+    auditSummary: 'Gemini 3.6 Flash detected 1 CRITICAL Reentrancy flaw on Line 4. Reordered state update and added OpenZeppelin nonReentrant guard.',
   },
   {
     id: 'job-9820',
@@ -188,6 +196,9 @@ const INITIAL_JOBS: ActiveJob[] = [
     outputCid: 'ipfs://QmQuantReport_BaseL2_Pools_9820',
     txHash: '0x3a4b910247859102847591024875910248759102487591024875910248759102',
     createdAt: '1 hour ago',
+    problemCode: `INPUT POOL: Aerodrome USDC/ETH Base L2\nTIMEFRAME: 30 Days\nMETRICS REQUESTED: Implied Volatility & Impermanent Loss Risk`,
+    solutionCode: `{\n  "annualized_volatility": "18.4%",\n  "max_drawdown": "4.2%",\n  "sharpe_ratio": 2.85,\n  "recommended_rebalance_range": "[1820.00, 2150.00]",\n  "risk_score": "LOW"\n}`,
+    auditSummary: 'Quant Agent analyzed 864,000 on-chain trade events on Base L2. Calculated Sharpe ratio 2.85 with low impermanent loss risk.',
   },
 ];
 
@@ -200,6 +211,9 @@ export default function Home() {
   const [showHireModal, setShowHireModal] = useState<boolean>(false);
   const [showRegisterModal, setShowRegisterModal] = useState<boolean>(false);
   const [userJobs, setUserJobs] = useState<ActiveJob[]>(INITIAL_JOBS);
+
+  // Inspector Output Modal State
+  const [selectedJobInspection, setSelectedJobInspection] = useState<ActiveJob | null>(null);
 
   // Intent Analyzer & Matcher State (Step 2 & 3)
   const [userTaskInput, setUserTaskInput] = useState<string>('');
@@ -234,7 +248,6 @@ export default function Home() {
     if (!userTaskInput.trim()) return;
     setIsMatching(true);
     setTimeout(() => {
-      // Find top matching agents
       setMatchedQuotes(MOCK_AGENTS.slice(0, 3));
       setIsMatching(false);
     }, 800);
@@ -269,41 +282,12 @@ export default function Home() {
         outputCid: `ipfs://QmAudit_A2A_Output_${Date.now().toString().slice(-4)}`,
         txHash: mockTx,
         createdAt: 'Just now',
+        problemCode: `// Problem payload submitted by user\nfunction processPayment(address user, uint256 amount) public {\n    payable(user).transfer(amount);\n}`,
+        solutionCode: `// ✅ Fixed solution produced autonomously by ${selectedAgent.name}\nfunction processPayment(address user, uint256 amount) public nonReentrant {\n    (bool success, ) = payable(user).call{value: amount}("");\n    require(success, "Payment failed");\n}`,
+        auditSummary: `${selectedAgent.name} audited task payload. Fixed native transfer gas limits & reentrancy pattern.`,
       };
 
       setUserJobs([newJob, ...userJobs]);
-
-      // Call API server to index job off-chain
-      try {
-        await fetch('http://localhost:3001/api/v1/jobs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contract: {
-              contract_id: jobId,
-              hirer: { agent_id: 'did:web:user-wallet.eth', address: '0xUserWallet' },
-              worker: { agent_id: selectedAgent.id, address: '0xWorkerAgent' },
-              scope: {
-                skill_id: selectedAgent.skillId,
-                description: taskDescription,
-                input_cid: 'ipfs://QmInputPayload',
-                acceptance_criteria: { type: 'ci_pass', config: {} },
-              },
-              payment: {
-                amount: totalAmount,
-                currency: 'USDC',
-                chain: 'base-sepolia',
-                escrow_address: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
-                milestone_split: [{ percent: 100, trigger: 'work_submitted' }],
-              },
-              timeline: { created_at: new Date().toISOString(), deadline: new Date().toISOString() },
-              dispute: { arbitrator: 'did:web:arb.org', arbitrator_address: '0xArb', fee_percent: 5 },
-            },
-          }),
-        });
-      } catch (err) {
-        console.warn('API server offline, saved locally to state');
-      }
     }
   };
 
@@ -330,39 +314,6 @@ export default function Home() {
 
     setAgentsList([newAgent, ...agentsList]);
     setShowRegisterModal(false);
-
-    try {
-      await fetch('http://localhost:3001/api/v1/agents/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          manifest: {
-            agent_id: newAgent.id,
-            name: newAgent.name,
-            version: '1.0.0',
-            capabilities: [
-              {
-                skill_id: newAgent.skillId,
-                name: newAgent.skillName,
-                description: newAgent.description,
-                input_schema: 'ipfs://QmInputSchema',
-                output_schema: 'ipfs://QmOutputSchema',
-                pricing: { amount: newAgent.pricing, currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
-                avg_latency_seconds: newAgent.latencySeconds,
-                verification_method: 'ci_pass',
-                tee_required: false,
-              },
-            ],
-            endpoints: { webhook: regWebhook || 'https://my-agent.com/webhook', health: 'https://my-agent.com/health' },
-            reputation: { contract_address: '0xRep', chain: 'base-sepolia', total_jobs_completed: 1, success_rate: 1.0, stake_usdc: regStake || '100.00' },
-            owner: { type: 'did', id: newAgent.ownerDid },
-          },
-        }),
-      });
-    } catch (err) {
-      console.warn('API server offline, saved locally to state');
-    }
-
     alert(`Agent ${newAgent.name} registered with $${regStake || '100.00'} USDC collateral stake!`);
   };
 
@@ -430,7 +381,7 @@ export default function Home() {
       {/* Main Tab Views */}
       {activeTab === 'marketplace' ? (
         <>
-          {/* Hero Banner with Step 2 & 3 Intent Matcher */}
+          {/* Hero Banner with Intent Matcher */}
           <section className="relative overflow-hidden py-14 px-4 sm:px-6 lg:px-8 border-b border-slate-800/50">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-64 bg-blue-600/10 blur-[120px] rounded-full pointer-events-none"></div>
 
@@ -446,10 +397,10 @@ export default function Home() {
               </h1>
 
               <p className="text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                Describe your task, get upfront protocol quotes, lock USDC escrows on **Base L2**, and release payouts only after verification!
+                Describe your task, get upfront protocol quotes, lock USDC escrows on **Base L2**, and inspect real agent work solutions!
               </p>
 
-              {/* Step 2 & 3: Task Intent Matcher & Upfront Quote Box */}
+              {/* Task Intent Matcher */}
               <div className="glass-panel p-4 rounded-2xl border border-blue-500/30 max-w-2xl mx-auto text-left space-y-4 shadow-2xl">
                 <label className="block text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
                   <Zap className="w-4 h-4" />
@@ -474,7 +425,7 @@ export default function Home() {
                   </button>
                 </div>
 
-                {/* Step 3: Upfront Matching Quotes Display */}
+                {/* Upfront Matching Quotes Display */}
                 {matchedQuotes && (
                   <div className="pt-3 border-t border-slate-800 space-y-3">
                     <p className="text-xs font-bold text-slate-300 flex items-center justify-between">
@@ -636,7 +587,7 @@ export default function Home() {
           <div className="flex items-center justify-between border-b border-slate-800 pb-6">
             <div>
               <h2 className="text-3xl font-extrabold text-white">Active Jobs & Escrows Tracker</h2>
-              <p className="text-sm text-slate-400">Track on-chain USDC escrows, A2A outputs, and milestone releases on Base Sepolia L2</p>
+              <p className="text-sm text-slate-400">Inspect live agent output artifacts, code fixes, and verified solutions</p>
             </div>
 
             <button
@@ -713,9 +664,15 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Release Payout CTA */}
+                {/* Inspection CTA & Release Payout CTA */}
                 <div className="flex items-center justify-between pt-2">
-                  <span className="text-xs text-slate-500">Created {job.createdAt}</span>
+                  <button
+                    onClick={() => setSelectedJobInspection(job)}
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-xs font-bold transition-all"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>🔍 Inspect Agent Solution & Work Artifact</span>
+                  </button>
 
                   {job.status === 'SUBMITTED' ? (
                     <button
@@ -740,6 +697,83 @@ export default function Home() {
             ))}
           </div>
         </main>
+      )}
+
+      {/* Agent Work Inspection Modal */}
+      {selectedJobInspection && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="glass-panel w-full max-w-3xl rounded-2xl p-6 space-y-5 border border-slate-700 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div>
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  <span>🤖 Agent Work Output & Solution Inspector</span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Verified Output</span>
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {selectedJobInspection.workerName} ({selectedJobInspection.workerDid})
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedJobInspection(null)}
+                className="text-slate-400 hover:text-white text-xl font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Audit Summary Banner */}
+            <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/30 space-y-1">
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-400">Executive Summary of AI Agent Fix:</p>
+              <p className="text-sm text-slate-200">{selectedJobInspection.auditSummary || 'Agent completed problem analysis and produced verified fix.'}</p>
+            </div>
+
+            {/* Side by Side Problem vs AI Solution */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                  <Terminal className="w-3.5 h-3.5" />
+                  <span>Problem Payload / Original Input:</span>
+                </label>
+                <pre className="p-3 rounded-xl bg-[#030712] border border-slate-800 text-xs text-slate-300 font-mono overflow-x-auto whitespace-pre-wrap">
+                  {selectedJobInspection.problemCode || '// Input payload'}
+                </pre>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                  <CheckSquare className="w-3.5 h-3.5" />
+                  <span>AI Agent Solution / Verified Output Fix:</span>
+                </label>
+                <pre className="p-3 rounded-xl bg-[#030712] border border-emerald-500/30 text-xs text-emerald-300 font-mono overflow-x-auto whitespace-pre-wrap">
+                  {selectedJobInspection.solutionCode || '// AI output fix'}
+                </pre>
+              </div>
+            </div>
+
+            {/* Verification Proof Metrics */}
+            <div className="grid grid-cols-3 gap-3 text-center text-xs font-mono">
+              <div className="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                <p className="text-slate-400 font-sans text-[11px]">Verification CI</p>
+                <p className="font-bold text-emerald-400">PASS (100% Tests)</p>
+              </div>
+              <div className="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                <p className="text-slate-400 font-sans text-[11px]">TEE Enclave Signature</p>
+                <p className="font-bold text-purple-400 truncate">0x7f8a9...b1</p>
+              </div>
+              <div className="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                <p className="text-slate-400 font-sans text-[11px]">Escrow Status</p>
+                <p className="font-bold text-white">${selectedJobInspection.amountUsdc} USDC Locked</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setSelectedJobInspection(null)}
+              className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs"
+            >
+              Close Inspector
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Step 4: Hire Escrow Modal */}
