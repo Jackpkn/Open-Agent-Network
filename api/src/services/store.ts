@@ -1,424 +1,282 @@
-import { AgentManifest, JobContract, JobSubmission } from '../types/index.js';
+import Database from 'better-sqlite3';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-const SEED_AGENTS: AgentManifest[] = [
-  {
-    agent_id: 'did:web:claude-reviewer.ai',
-    owner: { type: 'did', id: 'did:web:anthropic-partner.org' },
-    name: 'Claude Code Auditor',
-    version: '1.0.0',
-    capabilities: [
-      {
-        skill_id: 'code-review',
-        name: 'Security & Code Review',
-        description: 'Automated vulnerability scanning and SQL injection detection powered by Claude 3.5 Sonnet / Gemini Flash.',
-        input_schema: 'ipfs://QmInputSchema',
-        output_schema: 'ipfs://QmOutputSchema',
-        pricing: { amount: '25.00', currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
-        avg_latency_seconds: 15,
-        verification_method: 'ci_pass',
-        tee_required: false,
-      },
-    ],
-    endpoints: { webhook: 'https://claude-reviewer.ai/webhook', health: 'https://claude-reviewer.ai/health' },
-    reputation: { contract_address: '0x1234567890123456789012345678901234567890', chain: 'base-sepolia', success_rate: 0.994, total_jobs_completed: 142, stake_usdc: '1000.00' },
-  },
-  {
-    agent_id: 'did:web:alpha-quant.io',
-    owner: { type: 'did', id: 'did:web:alphaquant.io' },
-    name: 'Alpha Quant Analyst',
-    version: '1.0.0',
-    capabilities: [
-      {
-        skill_id: 'market-analysis',
-        name: 'Market & Portfolio Analysis',
-        description: 'Real-time DeFi yield optimization, volatility modeling, and protocol risk analysis.',
-        input_schema: 'ipfs://QmInputSchema',
-        output_schema: 'ipfs://QmOutputSchema',
-        pricing: { amount: '45.00', currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
-        avg_latency_seconds: 30,
-        verification_method: 'oracle_vote',
-        tee_required: false,
-      },
-    ],
-    endpoints: { webhook: 'https://alphaquant.io/webhook', health: 'https://alphaquant.io/health' },
-    reputation: { contract_address: '0x1234567890123456789012345678901234567890', chain: 'base-sepolia', success_rate: 0.988, total_jobs_completed: 89, stake_usdc: '2500.00' },
-  },
-  {
-    agent_id: 'did:web:polyglot-translator.ai',
-    owner: { type: 'did', id: 'did:web:polyglot.org' },
-    name: 'Polyglot Translator',
-    version: '1.0.0',
-    capabilities: [
-      {
-        skill_id: 'translation',
-        name: 'Multilingual Technical Translation',
-        description: 'Translates technical documentation, smart contract specs, and whitepapers into 40+ languages.',
-        input_schema: 'ipfs://QmInputSchema',
-        output_schema: 'ipfs://QmOutputSchema',
-        pricing: { amount: '12.00', currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
-        avg_latency_seconds: 8,
-        verification_method: 'deterministic',
-        tee_required: false,
-      },
-    ],
-    endpoints: { webhook: 'https://polyglot.org/webhook', health: 'https://polyglot.org/health' },
-    reputation: { contract_address: '0x1234567890123456789012345678901234567890', chain: 'base-sepolia', success_rate: 1.0, total_jobs_completed: 215, stake_usdc: '500.00' },
-  },
-  {
-    agent_id: 'did:web:bio-synth.org',
-    owner: { type: 'did', id: 'did:web:biosynth.org' },
-    name: 'Genomic Researcher AI',
-    version: '1.0.0',
-    capabilities: [
-      {
-        skill_id: 'literature-search',
-        name: 'PubMed & Structure Synthesis',
-        description: 'Synthesizes biomedical literature, UniProt accessions, and clinical trial datasets.',
-        input_schema: 'ipfs://QmInputSchema',
-        output_schema: 'ipfs://QmOutputSchema',
-        pricing: { amount: '50.00', currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
-        avg_latency_seconds: 45,
-        verification_method: 'human_review',
-        tee_required: false,
-      },
-    ],
-    endpoints: { webhook: 'https://biosynth.org/webhook', health: 'https://biosynth.org/health' },
-    reputation: { contract_address: '0x1234567890123456789012345678901234567890', chain: 'base-sepolia', success_rate: 0.975, total_jobs_completed: 64, stake_usdc: '1500.00' },
-  },
-  {
-    agent_id: 'did:web:devops-sentinel.io',
-    owner: { type: 'did', id: 'did:web:sentinel.io' },
-    name: 'DevOps Sentinel',
-    version: '1.0.0',
-    capabilities: [
-      {
-        skill_id: 'infra-deploy',
-        name: 'Kubernetes & CI Pipeline Audit',
-        description: 'Monitors cluster health, verifies Helm deployment specs, and audits Terraform files.',
-        input_schema: 'ipfs://QmInputSchema',
-        output_schema: 'ipfs://QmOutputSchema',
-        pricing: { amount: '30.00', currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
-        avg_latency_seconds: 20,
-        verification_method: 'ci_pass',
-        tee_required: false,
-      },
-    ],
-    endpoints: { webhook: 'https://sentinel.io/webhook', health: 'https://sentinel.io/health' },
-    reputation: { contract_address: '0x1234567890123456789012345678901234567890', chain: 'base-sepolia', success_rate: 0.991, total_jobs_completed: 110, stake_usdc: '1200.00' },
-  },
-  {
-    agent_id: 'did:web:solidity-fuzzer.io',
-    owner: { type: 'did', id: 'did:web:fuzzer.io' },
-    name: 'Solidity Contract Fuzzer',
-    version: '1.0.0',
-    capabilities: [
-      {
-        skill_id: 'solidity-fuzz',
-        name: 'Slither & Foundry Property Fuzzing',
-        description: 'Runs automated Slither static analysis and Foundry property fuzz testing on Solidity contracts.',
-        input_schema: 'ipfs://QmInputSchema',
-        output_schema: 'ipfs://QmOutputSchema',
-        pricing: { amount: '40.00', currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
-        avg_latency_seconds: 25,
-        verification_method: 'ci_pass',
-        tee_required: false,
-      },
-    ],
-    endpoints: { webhook: 'https://solidity-fuzzer.io/webhook', health: 'https://solidity-fuzzer.io/health' },
-    reputation: { contract_address: '0x1234567890123456789012345678901234567890', chain: 'base-sepolia', success_rate: 0.996, total_jobs_completed: 178, stake_usdc: '2000.00' },
-  },
-  {
-    agent_id: 'did:web:sql-opt.ai',
-    owner: { type: 'did', id: 'did:web:sqlopt.ai' },
-    name: 'SQL Query Optimizer',
-    version: '1.0.0',
-    capabilities: [
-      {
-        skill_id: 'sql-optimize',
-        name: 'Postgres & MySQL Query Tuning',
-        description: 'Analyzes EXPLAIN ANALYZE execution trees, recommends indexes, and rewrites slow JOIN queries.',
-        input_schema: 'ipfs://QmInputSchema',
-        output_schema: 'ipfs://QmOutputSchema',
-        pricing: { amount: '18.00', currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
-        avg_latency_seconds: 10,
-        verification_method: 'deterministic',
-        tee_required: false,
-      },
-    ],
-    endpoints: { webhook: 'https://sql-opt.ai/webhook', health: 'https://sql-opt.ai/health' },
-    reputation: { contract_address: '0x1234567890123456789012345678901234567890', chain: 'base-sepolia', success_rate: 0.985, total_jobs_completed: 95, stake_usdc: '800.00' },
-  },
-  {
-    agent_id: 'did:web:data-cleaner.io',
-    owner: { type: 'did', id: 'did:web:dataclean.io' },
-    name: 'Pandas Data Cleaner',
-    version: '1.0.0',
-    capabilities: [
-      {
-        skill_id: 'data-cleaning',
-        name: 'Polars & Pandas CSV Cleansing',
-        description: 'Cleans null values, standardizes date formats, deduplicates rows, and validates schema constraints.',
-        input_schema: 'ipfs://QmInputSchema',
-        output_schema: 'ipfs://QmOutputSchema',
-        pricing: { amount: '15.00', currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
-        avg_latency_seconds: 12,
-        verification_method: 'deterministic',
-        tee_required: false,
-      },
-    ],
-    endpoints: { webhook: 'https://data-cleaner.io/webhook', health: 'https://data-cleaner.io/health' },
-    reputation: { contract_address: '0x1234567890123456789012345678901234567890', chain: 'base-sepolia', success_rate: 0.998, total_jobs_completed: 310, stake_usdc: '600.00' },
-  },
-  {
-    agent_id: 'did:web:tech-copy.ai',
-    owner: { type: 'did', id: 'did:web:techcopy.ai' },
-    name: 'Technical Copywriter',
-    version: '1.0.0',
-    capabilities: [
-      {
-        skill_id: 'doc-copywriting',
-        name: 'SEO & Technical Documentation',
-        description: 'Generates API reference docs, integration guides, and developer release notes.',
-        input_schema: 'ipfs://QmInputSchema',
-        output_schema: 'ipfs://QmOutputSchema',
-        pricing: { amount: '20.00', currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
-        avg_latency_seconds: 18,
-        verification_method: 'human_review',
-        tee_required: false,
-      },
-    ],
-    endpoints: { webhook: 'https://tech-copy.ai/webhook', health: 'https://tech-copy.ai/health' },
-    reputation: { contract_address: '0x1234567890123456789012345678901234567890', chain: 'base-sepolia', success_rate: 0.970, total_jobs_completed: 82, stake_usdc: '750.00' },
-  },
-  {
-    agent_id: 'did:web:loadtest-agent.io',
-    owner: { type: 'did', id: 'did:web:loadtest.io' },
-    name: 'Distributed k6 Load Tester',
-    version: '1.0.0',
-    capabilities: [
-      {
-        skill_id: 'api-loadtest',
-        name: 'k6 / Locust Load Benchmark',
-        description: 'Executes 10,000+ concurrent VU load benchmarks against HTTP & WebSocket APIs.',
-        input_schema: 'ipfs://QmInputSchema',
-        output_schema: 'ipfs://QmOutputSchema',
-        pricing: { amount: '35.00', currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
-        avg_latency_seconds: 40,
-        verification_method: 'ci_pass',
-        tee_required: false,
-      },
-    ],
-    endpoints: { webhook: 'https://loadtest-agent.io/webhook', health: 'https://loadtest-agent.io/health' },
-    reputation: { contract_address: '0x1234567890123456789012345678901234567890', chain: 'base-sepolia', success_rate: 0.992, total_jobs_completed: 130, stake_usdc: '1400.00' },
-  },
-  {
-    agent_id: 'did:web:patent-synth.org',
-    owner: { type: 'did', id: 'did:web:patentsynth.org' },
-    name: 'Patent Prior Art Agent',
-    version: '1.0.0',
-    capabilities: [
-      {
-        skill_id: 'patent-search',
-        name: 'Patent Claim & Prior Art Search',
-        description: 'Searches USPTO, WIPO, and OpenAlex databases to identify prior art for patent claims.',
-        input_schema: 'ipfs://QmInputSchema',
-        output_schema: 'ipfs://QmOutputSchema',
-        pricing: { amount: '60.00', currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
-        avg_latency_seconds: 50,
-        verification_method: 'human_review',
-        tee_required: false,
-      },
-    ],
-    endpoints: { webhook: 'https://patent-synth.org/webhook', health: 'https://patent-synth.org/health' },
-    reputation: { contract_address: '0x1234567890123456789012345678901234567890', chain: 'base-sepolia', success_rate: 0.981, total_jobs_completed: 55, stake_usdc: '1800.00' },
-  },
-  {
-    agent_id: 'did:web:tokenomics-audit.io',
-    owner: { type: 'did', id: 'did:web:tokenomics.io' },
-    name: 'Tokenomics Auditor',
-    version: '1.0.0',
-    capabilities: [
-      {
-        skill_id: 'tokenomics-audit',
-        name: 'Vesting & Emission Modeling',
-        description: 'Simulates 5-year token unlocks, inflationary sell pressure, and DEX liquidity depth.',
-        input_schema: 'ipfs://QmInputSchema',
-        output_schema: 'ipfs://QmOutputSchema',
-        pricing: { amount: '55.00', currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
-        avg_latency_seconds: 35,
-        verification_method: 'oracle_vote',
-        tee_required: false,
-      },
-    ],
-    endpoints: { webhook: 'https://tokenomics-audit.io/webhook', health: 'https://tokenomics-audit.io/health' },
-    reputation: { contract_address: '0x1234567890123456789012345678901234567890', chain: 'base-sepolia', success_rate: 0.989, total_jobs_completed: 72, stake_usdc: '2200.00' },
-  },
-  {
-    agent_id: 'did:web:a11y-sentinel.io',
-    owner: { type: 'did', id: 'did:web:a11ysentinel.io' },
-    name: 'WCAG Accessibility Auditor',
-    version: '1.0.0',
-    capabilities: [
-      {
-        skill_id: 'a11y-audit',
-        name: 'axe-core WCAG 2.1 Audit',
-        description: 'Audits web pages for ARIA labels, contrast ratios, keyboard navigation, and screen reader flow.',
-        input_schema: 'ipfs://QmInputSchema',
-        output_schema: 'ipfs://QmOutputSchema',
-        pricing: { amount: '22.00', currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
-        avg_latency_seconds: 15,
-        verification_method: 'ci_pass',
-        tee_required: false,
-      },
-    ],
-    endpoints: { webhook: 'https://a11y-sentinel.io/webhook', health: 'https://a11y-sentinel.io/health' },
-    reputation: { contract_address: '0x1234567890123456789012345678901234567890', chain: 'base-sepolia', success_rate: 0.995, total_jobs_completed: 160, stake_usdc: '900.00' },
-  },
-  {
-    agent_id: 'did:web:svg-gen.ai',
-    owner: { type: 'did', id: 'did:web:svggen.ai' },
-    name: 'SVG Asset Generator',
-    version: '1.0.0',
-    capabilities: [
-      {
-        skill_id: 'svg-asset-gen',
-        name: 'Clean Vector SVG Asset Generation',
-        description: 'Generates clean, scalable, optimized SVG icons, illustrations, and UI components.',
-        input_schema: 'ipfs://QmInputSchema',
-        output_schema: 'ipfs://QmOutputSchema',
-        pricing: { amount: '10.00', currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
-        avg_latency_seconds: 6,
-        verification_method: 'deterministic',
-        tee_required: false,
-      },
-    ],
-    endpoints: { webhook: 'https://svg-gen.ai/webhook', health: 'https://svg-gen.ai/health' },
-    reputation: { contract_address: '0x1234567890123456789012345678901234567890', chain: 'base-sepolia', success_rate: 0.999, total_jobs_completed: 420, stake_usdc: '400.00' },
-  },
-  {
-    agent_id: 'did:web:threat-intel.io',
-    owner: { type: 'did', id: 'did:web:threatintel.io' },
-    name: 'CVE Threat Monitor',
-    version: '1.0.0',
-    capabilities: [
-      {
-        skill_id: 'threat-intel',
-        name: 'NVD & CVE Zero-Day Monitoring',
-        description: 'Cross-references dependency manifests against the National Vulnerability Database for zero-day CVEs.',
-        input_schema: 'ipfs://QmInputSchema',
-        output_schema: 'ipfs://QmOutputSchema',
-        pricing: { amount: '28.00', currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
-        avg_latency_seconds: 14,
-        verification_method: 'ci_pass',
-        tee_required: false,
-      },
-    ],
-    endpoints: { webhook: 'https://threat-intel.io/webhook', health: 'https://threat-intel.io/health' },
-    reputation: { contract_address: '0x1234567890123456789012345678901234567890', chain: 'base-sepolia', success_rate: 0.993, total_jobs_completed: 195, stake_usdc: '1100.00' },
-  },
-];
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// ─── Types (A2A-aligned) ───────────────────────────────────────────
+
+export interface A2AAgentCard {
+  name: string;
+  description: string;
+  url: string;
+  version: string;
+  capabilities: {
+    streaming?: boolean;
+    pushNotifications?: boolean;
+    stateTransitionHistory?: boolean;
+  };
+  skills: Array<{
+    id: string;
+    name: string;
+    description: string;
+    tags?: string[];
+    examples?: string[];
+  }>;
+  defaultInputModes?: string[];
+  defaultOutputModes?: string[];
+  securitySchemes?: Record<string, unknown>;
+}
+
+export interface RegisteredAgent {
+  id: number;
+  agent_url: string;
+  agent_card: A2AAgentCard;
+  is_healthy: boolean;
+  registered_at: string;
+  last_health_check: string | null;
+  // Open Agent Network extensions (pricing, reputation, etc.)
+  pricing_amount?: string;
+  pricing_currency?: string;
+  stake_usdc?: string;
+}
+
+export type TaskState =
+  | 'submitted'
+  | 'working'
+  | 'input-required'
+  | 'completed'
+  | 'failed'
+  | 'canceled'
+  | 'rejected';
+
+export interface Job {
+  id: string;
+  agent_id: number;
+  agent_url: string;
+  agent_name: string;
+  skill_id: string;
+  task_prompt: string;
+  status: TaskState;
+  result_text: string | null;
+  result_artifacts: string | null; // JSON string of artifacts
+  pricing_amount: string;
+  pricing_currency: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ─── SQLite Store ──────────────────────────────────────────────────
 
 class DataStore {
-  private agents: Map<string, AgentManifest> = new Map();
-  private jobs: Map<string, JobContract> = new Map();
-  private submissions: Map<string, JobSubmission> = new Map();
+  private db: Database.Database;
 
   constructor() {
-    SEED_AGENTS.forEach((agent) => this.agents.set(agent.agent_id, agent));
+    const dbPath = path.join(__dirname, '..', '..', 'data', 'oan.sqlite');
+    // Ensure data directory exists
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+
+    this.db = new Database(dbPath);
+    this.db.pragma('journal_mode = WAL');
+    this.db.pragma('foreign_keys = ON');
+    this.initTables();
   }
 
-  // Agent Registry Methods
-  registerAgent(manifest: AgentManifest): { agent_id: string; registered_at: string; status: string } {
-    this.agents.set(manifest.agent_id, manifest);
-    return {
-      agent_id: manifest.agent_id,
-      registered_at: new Date().toISOString(),
-      status: 'active',
-    };
+  private initTables() {
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS agents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        agent_url TEXT UNIQUE NOT NULL,
+        agent_card_json TEXT NOT NULL,
+        is_healthy INTEGER DEFAULT 1,
+        pricing_amount TEXT DEFAULT '0.00',
+        pricing_currency TEXT DEFAULT 'USDC',
+        stake_usdc TEXT DEFAULT '0.00',
+        registered_at TEXT DEFAULT (datetime('now')),
+        last_health_check TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS jobs (
+        id TEXT PRIMARY KEY,
+        agent_id INTEGER NOT NULL,
+        agent_url TEXT NOT NULL,
+        agent_name TEXT NOT NULL,
+        skill_id TEXT NOT NULL,
+        task_prompt TEXT NOT NULL,
+        status TEXT DEFAULT 'submitted',
+        result_text TEXT,
+        result_artifacts TEXT,
+        pricing_amount TEXT DEFAULT '0.00',
+        pricing_currency TEXT DEFAULT 'USDC',
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (agent_id) REFERENCES agents(id)
+      );
+    `);
   }
 
-  getAgent(agentId: string): AgentManifest | undefined {
-    return this.agents.get(agentId);
+  // ─── Agent Registry ────────────────────────────────────────────
+
+  registerAgent(
+    agentUrl: string,
+    agentCard: A2AAgentCard,
+    pricingAmount?: string,
+    pricingCurrency?: string,
+    stakeUsdc?: string
+  ): RegisteredAgent {
+    const stmt = this.db.prepare(`
+      INSERT INTO agents (agent_url, agent_card_json, pricing_amount, pricing_currency, stake_usdc)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(agent_url) DO UPDATE SET
+        agent_card_json = excluded.agent_card_json,
+        pricing_amount = excluded.pricing_amount,
+        pricing_currency = excluded.pricing_currency,
+        stake_usdc = excluded.stake_usdc,
+        is_healthy = 1,
+        last_health_check = datetime('now')
+    `);
+
+    stmt.run(
+      agentUrl,
+      JSON.stringify(agentCard),
+      pricingAmount || '0.00',
+      pricingCurrency || 'USDC',
+      stakeUsdc || '0.00'
+    );
+
+    return this.getAgentByUrl(agentUrl)!;
   }
 
-  searchAgents(params: { skill?: string; min_reputation?: number; max_price?: number }): { agents: AgentManifest[]; total: number } {
-    let result = Array.from(this.agents.values());
+  getAgent(id: number): RegisteredAgent | undefined {
+    const row = this.db.prepare('SELECT * FROM agents WHERE id = ?').get(id) as any;
+    return row ? this.rowToAgent(row) : undefined;
+  }
+
+  getAgentByUrl(url: string): RegisteredAgent | undefined {
+    const row = this.db.prepare('SELECT * FROM agents WHERE agent_url = ?').get(url) as any;
+    return row ? this.rowToAgent(row) : undefined;
+  }
+
+  getAllAgents(): RegisteredAgent[] {
+    const rows = this.db.prepare('SELECT * FROM agents ORDER BY registered_at DESC').all() as any[];
+    return rows.map((r) => this.rowToAgent(r));
+  }
+
+  searchAgents(params: { skill?: string; query?: string }): RegisteredAgent[] {
+    let agents = this.getAllAgents();
 
     if (params.skill) {
-      result = result.filter((agent) =>
-        agent.capabilities.some((cap) => cap.skill_id.toLowerCase() === params.skill?.toLowerCase())
+      const skill = params.skill.toLowerCase();
+      agents = agents.filter((a) =>
+        a.agent_card.skills.some(
+          (s) =>
+            s.id.toLowerCase() === skill ||
+            s.name.toLowerCase().includes(skill) ||
+            (s.tags || []).some((t) => t.toLowerCase().includes(skill))
+        )
       );
     }
 
-    if (params.min_reputation !== undefined) {
-      result = result.filter((agent) => (agent.reputation.success_rate * 5.0) >= params.min_reputation!);
-    }
-
-    if (params.max_price !== undefined) {
-      result = result.filter((agent) =>
-        agent.capabilities.some((cap) => parseFloat(cap.pricing.amount) <= params.max_price!)
+    if (params.query) {
+      const q = params.query.toLowerCase();
+      agents = agents.filter(
+        (a) =>
+          a.agent_card.name.toLowerCase().includes(q) ||
+          a.agent_card.description.toLowerCase().includes(q) ||
+          a.agent_card.skills.some(
+            (s) =>
+              s.name.toLowerCase().includes(q) ||
+              s.description.toLowerCase().includes(q) ||
+              (s.tags || []).some((t) => t.toLowerCase().includes(q))
+          )
       );
     }
 
+    return agents;
+  }
+
+  updateHealthStatus(id: number, isHealthy: boolean) {
+    this.db.prepare(
+      'UPDATE agents SET is_healthy = ?, last_health_check = datetime(\'now\') WHERE id = ?'
+    ).run(isHealthy ? 1 : 0, id);
+  }
+
+  deleteAgent(id: number) {
+    this.db.prepare('DELETE FROM agents WHERE id = ?').run(id);
+  }
+
+  // ─── Jobs ──────────────────────────────────────────────────────
+
+  createJob(job: Omit<Job, 'created_at' | 'updated_at'>): Job {
+    const stmt = this.db.prepare(`
+      INSERT INTO jobs (id, agent_id, agent_url, agent_name, skill_id, task_prompt, status, pricing_amount, pricing_currency)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      job.id,
+      job.agent_id,
+      job.agent_url,
+      job.agent_name,
+      job.skill_id,
+      job.task_prompt,
+      job.status,
+      job.pricing_amount,
+      job.pricing_currency
+    );
+
+    return this.getJob(job.id)!;
+  }
+
+  getJob(id: string): Job | undefined {
+    const row = this.db.prepare('SELECT * FROM jobs WHERE id = ?').get(id) as any;
+    return row ? this.rowToJob(row) : undefined;
+  }
+
+  getAllJobs(): Job[] {
+    const rows = this.db.prepare('SELECT * FROM jobs ORDER BY created_at DESC').all() as any[];
+    return rows.map((r) => this.rowToJob(r));
+  }
+
+  updateJobStatus(id: string, status: TaskState, resultText?: string, resultArtifacts?: string) {
+    this.db.prepare(
+      `UPDATE jobs SET status = ?, result_text = COALESCE(?, result_text), result_artifacts = COALESCE(?, result_artifacts), updated_at = datetime('now') WHERE id = ?`
+    ).run(status, resultText || null, resultArtifacts || null, id);
+  }
+
+  // ─── Private helpers ───────────────────────────────────────────
+
+  private rowToAgent(row: any): RegisteredAgent {
     return {
-      agents: result,
-      total: result.length,
+      id: row.id,
+      agent_url: row.agent_url,
+      agent_card: JSON.parse(row.agent_card_json),
+      is_healthy: !!row.is_healthy,
+      registered_at: row.registered_at,
+      last_health_check: row.last_health_check,
+      pricing_amount: row.pricing_amount,
+      pricing_currency: row.pricing_currency,
+      stake_usdc: row.stake_usdc,
     };
   }
 
-  // Job Management Methods
-  createJob(contract: JobContract): { job_id: string; escrow_address: string; status: string } {
-    this.jobs.set(contract.contract_id, contract);
+  private rowToJob(row: any): Job {
     return {
-      job_id: contract.contract_id,
-      escrow_address: contract.payment.escrow_address,
-      status: 'active',
-    };
-  }
-
-  getJob(jobId: string): JobContract | undefined {
-    return this.jobs.get(jobId);
-  }
-
-  getAllJobs(): JobContract[] {
-    return Array.from(this.jobs.values());
-  }
-
-  submitWork(jobId: string, outputCid: string, verificationProof: string): { status: string; submitted_at: string } {
-    const job = this.jobs.get(jobId);
-    if (!job) {
-      throw new Error(`Job ${jobId} not found`);
-    }
-
-    const submission: JobSubmission = {
-      job_id: jobId,
-      output_cid: outputCid,
-      verification_proof: verificationProof,
-      submitted_at: new Date().toISOString(),
-      status: 'submitted',
-    };
-
-    this.submissions.set(jobId, submission);
-    return {
-      status: 'submitted',
-      submitted_at: submission.submitted_at,
-    };
-  }
-
-  getSubmission(jobId: string): JobSubmission | undefined {
-    return this.submissions.get(jobId);
-  }
-
-  verifyJob(jobId: string, passed: boolean, qualityScore?: number): { status: string; verified_at: string } {
-    const submission = this.submissions.get(jobId);
-    if (!submission) {
-      throw new Error(`Submission for job ${jobId} not found`);
-    }
-
-    submission.status = passed ? 'verified' : 'disputed';
-    return {
-      status: submission.status,
-      verified_at: new Date().toISOString(),
+      id: row.id,
+      agent_id: row.agent_id,
+      agent_url: row.agent_url,
+      agent_name: row.agent_name,
+      skill_id: row.skill_id,
+      task_prompt: row.task_prompt,
+      status: row.status,
+      result_text: row.result_text,
+      result_artifacts: row.result_artifacts,
+      pricing_amount: row.pricing_amount,
+      pricing_currency: row.pricing_currency,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
     };
   }
 }

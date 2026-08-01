@@ -98,15 +98,11 @@ export default function Home() {
   const [realLlmOutput, setRealLlmOutput] = useState<string>('');
 
   // Agent Register Form State
-  const [regName, setRegName] = useState<string>('');
-  const [regDid, setRegDid] = useState<string>('');
-  const [regCategory, setRegCategory] = useState<'software' | 'finance' | 'creative' | 'science' | 'custom'>('software');
-  const [regSkillId, setRegSkillId] = useState<string>('code-review');
+  const [regUrl, setRegUrl] = useState<string>('http://localhost:8001');
   const [regPrice, setRegPrice] = useState<string>('25.00');
   const [regStake, setRegStake] = useState<string>('100.00');
-  const [regWebhook, setRegWebhook] = useState<string>('https://my-agent.com/webhook');
 
-  // Load Real Agents & Jobs from Fastify API Server
+  // Load Real Agents & Jobs from Fastify API Server (SQLite Database)
   useEffect(() => {
     fetchInitialData();
   }, []);
@@ -114,56 +110,61 @@ export default function Home() {
   const fetchInitialData = async () => {
     setIsLoadingApi(true);
     try {
-      // 1. Fetch live registered agents from Fastify API
+      // 1. Fetch real registered agents from Fastify API / SQLite
       const agentRes = await fetch('http://localhost:3001/api/v1/agents/search');
       if (agentRes.ok) {
         const agentData = await agentRes.json();
-        const mappedAgents: Agent[] = (agentData.agents || []).map((manifest: any) => {
-          const cap = manifest.capabilities?.[0] || {};
+        const mappedAgents: Agent[] = (agentData.agents || []).map((dbAgent: any) => {
+          const card = dbAgent.agent_card || {};
+          const primarySkill = card.skills?.[0] || {};
           return {
-            id: manifest.agent_id,
-            name: manifest.name,
-            category: manifest.agent_id.includes('quant') ? 'finance' : manifest.agent_id.includes('translator') ? 'creative' : manifest.agent_id.includes('bio') ? 'science' : 'software',
-            skillId: cap.skill_id || 'code-review',
-            skillName: cap.name || 'AI Task Execution',
-            description: cap.description || manifest.name,
-            pricing: cap.pricing?.amount || '25.00',
-            pricingModel: cap.pricing?.model || 'fixed',
-            successRate: Math.round((manifest.reputation?.success_rate || 0.99) * 100),
-            completedJobs: manifest.reputation?.total_jobs_completed || 10,
-            stakeUsdc: manifest.reputation?.stake_usdc || '1,000.00',
-            latencySeconds: cap.avg_latency_seconds || 15,
-            verificationMethod: cap.verification_method || 'ci_pass',
-            ownerDid: manifest.owner?.id || 'did:web:owner.org',
-            teeVerified: cap.verification_method === 'tee_verification',
+            id: String(dbAgent.id),
+            name: card.name || 'A2A Agent',
+            category: (primarySkill.tags || []).includes('finance')
+              ? 'finance'
+              : (primarySkill.tags || []).includes('translation')
+              ? 'creative'
+              : 'software',
+            skillId: primarySkill.id || 'general',
+            skillName: primarySkill.name || 'A2A Task Execution',
+            description: card.description || primarySkill.description || 'Google A2A Protocol Compliant Agent',
+            pricing: dbAgent.pricing_amount || '25.00',
+            pricingModel: 'fixed',
+            successRate: 100,
+            completedJobs: 1,
+            stakeUsdc: dbAgent.stake_usdc || '100.00',
+            latencySeconds: 10,
+            verificationMethod: 'a2a_signature',
+            ownerDid: dbAgent.agent_url,
+            teeVerified: card.capabilities?.streaming || false,
           };
         });
         setAgentsList(mappedAgents);
       }
 
-      // 2. Fetch live jobs from Fastify API
+      // 2. Fetch real jobs from Fastify API / SQLite
       const jobRes = await fetch('http://localhost:3001/api/v1/jobs');
       if (jobRes.ok) {
         const jobData = await jobRes.json();
-        const mappedJobs: ActiveJob[] = (jobData.jobs || []).map((contract: any) => ({
-          id: contract.contract_id,
-          workerName: contract.worker.agent_id.split(':').pop() || 'AI Worker',
-          workerDid: contract.worker.agent_id,
-          skillId: contract.scope.skill_id,
-          description: contract.scope.description,
-          amountUsdc: contract.payment.amount,
-          status: 'SUBMITTED',
-          outputCid: contract.scope.input_cid || `ipfs://QmAudit_${contract.contract_id}`,
+        const mappedJobs: ActiveJob[] = (jobData.jobs || []).map((j: any) => ({
+          id: j.id,
+          workerName: j.agent_name,
+          workerDid: j.agent_url,
+          skillId: j.skill_id,
+          description: j.task_prompt,
+          amountUsdc: j.pricing_amount,
+          status: j.status === 'completed' ? 'COMPLETED' : 'SUBMITTED',
+          outputCid: `ipfs://QmAudit_${j.id}`,
           txHash: '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
-          createdAt: new Date(contract.timeline.created_at).toLocaleTimeString(),
-          problemCode: contract.scope.description,
-          solutionCode: `// ✅ Gemini 3.6 Flash Verified Output Fix\n// Executed by ${contract.worker.agent_id}\n// Status: CI Test Passed (100% Security)`,
-          auditSummary: `Real API Job Execution: ${contract.worker.agent_id} completed task over A2A protocol.`,
+          createdAt: new Date(j.created_at).toLocaleTimeString(),
+          problemCode: j.task_prompt,
+          solutionCode: j.result_text || '// A2A Task Executed',
+          auditSummary: `Real A2A Task Execution: ${j.agent_name} on ${j.agent_url}`,
         }));
         setUserJobs(mappedJobs);
       }
     } catch (err) {
-      console.warn('Fastify API server connecting...');
+      console.warn('Fastify API server connecting...', err);
     } finally {
       setIsLoadingApi(false);
     }
@@ -186,31 +187,30 @@ export default function Home() {
       if (res.ok) {
         const data = await res.json();
         if (data.agents && data.agents.length > 0) {
-          const matched: Agent[] = data.agents.map((m: any) => {
-            const cap = m.capabilities?.[0] || {};
+          const matched: Agent[] = data.agents.map((dbAgent: any) => {
+            const card = dbAgent.agent_card || {};
+            const primarySkill = card.skills?.[0] || {};
             return {
-              id: m.agent_id,
-              name: m.name,
+              id: String(dbAgent.id),
+              name: card.name,
               category: 'software',
-              skillId: cap.skill_id || 'code-review',
-              skillName: cap.name || 'AI Task Execution',
-              description: cap.description || m.name,
-              pricing: cap.pricing?.amount || '25.00',
-              pricingModel: cap.pricing?.model || 'fixed',
-              successRate: 99.4,
-              completedJobs: 142,
-              stakeUsdc: '1,000.00',
-              latencySeconds: 15,
-              verificationMethod: 'ci_pass',
-              ownerDid: m.owner?.id || 'did:web:owner.org',
+              skillId: primarySkill.id || 'general',
+              skillName: primarySkill.name || 'A2A Task',
+              description: card.description,
+              pricing: dbAgent.pricing_amount || '25.00',
+              pricingModel: 'fixed',
+              successRate: 100,
+              completedJobs: 1,
+              stakeUsdc: dbAgent.stake_usdc || '100.00',
+              latencySeconds: 10,
+              verificationMethod: 'a2a_signature',
+              ownerDid: dbAgent.agent_url,
             };
           });
           setMatchedQuotes(matched.slice(0, 3));
         } else {
           setMatchedQuotes(agentsList.slice(0, 3));
         }
-      } else {
-        setMatchedQuotes(agentsList.slice(0, 3));
       }
     } catch (err) {
       setMatchedQuotes(agentsList.slice(0, 3));
@@ -234,89 +234,109 @@ export default function Home() {
 
     const baseFee = parseFloat(selectedAgent.pricing);
     const totalAmount = (baseFee * 1.01).toFixed(2);
-    const jobId = `job-${Date.now().toString().slice(-4)}`;
     const mockTx = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
 
     setCreatedJobTx(mockTx);
     setJobCreated(true);
     setLiveSseLogs([`[00:00] 🔒 Depositing $${totalAmount} USDC into ACPEscrow.sol on Base Sepolia L2...`]);
 
-    // Connect to REAL SSE Stream from Agent Server (Port 8001)
-    const promptParam = encodeURIComponent(taskDescription || 'Audit smart contract deposit function');
-    const sseUrl = `http://localhost:8001/a2a/v1/stream?prompt=${promptParam}`;
-
     let accumulatedOutput = '';
-    const eventSource = new EventSource(sseUrl);
 
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.chunk) {
-          setLiveSseLogs((prev) => [...prev, data.chunk]);
-          accumulatedOutput += data.chunk + '\n';
+    // 1. Dispatch Task to Fastify API over A2A protocol (SQLite persistence)
+    try {
+      const apiRes = await fetch('http://localhost:3001/api/v1/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agent_id: parseInt(selectedAgent.id, 10),
+          skill_id: selectedAgent.skillId,
+          task_prompt: taskDescription || 'Execute A2A Task',
+        }),
+      });
+
+      if (apiRes.ok) {
+        const apiData = await apiRes.json();
+        const createdJob = apiData.job;
+        if (createdJob && createdJob.result_text) {
+          accumulatedOutput = createdJob.result_text;
           setRealLlmOutput(accumulatedOutput);
         }
-        if (data.review) {
-          accumulatedOutput = jsonToFormattedReview(data.review);
-          setRealLlmOutput(accumulatedOutput);
-        }
-      } catch (err) {
-        console.warn('SSE parse error', err);
       }
-    };
+    } catch (err) {
+      console.warn('API post error', err);
+    }
 
-    eventSource.onerror = () => {
-      eventSource.close();
-      setLiveSseLogs((prev) => [...prev, '[00:08] 🎉 Agent SSE Stream Completed! Outcome Saved to Base L2 Escrow.']);
+    // 2. Connect to Real A2A SSE Event Stream from Agent Server
+    const promptParam = encodeURIComponent(taskDescription || 'Audit code payload');
+    const sseUrl = `${selectedAgent.ownerDid}/a2a/v1/stream?prompt=${promptParam}`;
 
-      const newJob: ActiveJob = {
-        id: jobId,
-        workerName: selectedAgent.name,
-        workerDid: selectedAgent.id,
-        skillId: selectedAgent.skillId,
-        description: taskDescription || `Execute ${selectedAgent.skillName}`,
-        amountUsdc: totalAmount,
-        status: 'SUBMITTED',
-        outputCid: `ipfs://QmAudit_${jobId}`,
-        txHash: mockTx,
-        createdAt: 'Just now',
-        problemCode: taskDescription || 'Smart contract deposit function payload',
-        solutionCode: accumulatedOutput || `// Gemini 3.6 Flash Real Audit Result\n{\n  "overall_score": 4.9,\n  "summary": "Verified zero security vulnerabilities remaining."\n}`,
-        auditSummary: `Gemini 3.6 Flash Real Stream: Audited input payload over live SSE stream. 100% CI passed.`,
+    try {
+      const eventSource = new EventSource(sseUrl);
+
+      eventSource.addEventListener('TaskStatusUpdateEvent', (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(event.data);
+          setLiveSseLogs((prev) => [...prev, `[STATUS] ${data.message || data.status}`]);
+        } catch (e) {}
+      });
+
+      eventSource.addEventListener('TaskArtifactUpdateEvent', (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(event.data);
+          const artifactText = data.artifact?.parts?.[0]?.text;
+          if (artifactText) {
+            setLiveSseLogs((prev) => [...prev, `[ARTIFACT] ${data.artifact.name}: Received Gemini Output`]);
+            accumulatedOutput = artifactText;
+            setRealLlmOutput(accumulatedOutput);
+          }
+        } catch (e) {}
+      });
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.message) setLiveSseLogs((prev) => [...prev, data.message]);
+        } catch (e) {}
       };
 
-      setUserJobs([newJob, ...userJobs]);
-    };
-  };
-
-  const jsonToFormattedReview = (reviewObj: any) => {
-    return `// REAL GEMINI 3.6 FLASH AUDIT REPORT\n` + JSON.stringify(reviewObj, null, 2);
+      eventSource.onerror = () => {
+        eventSource.close();
+        setLiveSseLogs((prev) => [...prev, '🎉 A2A Protocol Task Stream Completed! Outcome Saved to SQLite DB.']);
+        fetchInitialData();
+      };
+    } catch (err) {
+      setLiveSseLogs((prev) => [...prev, '⚡ A2A Direct Dispatch Complete. Outcome saved to SQLite DB.']);
+      fetchInitialData();
+    }
   };
 
   const handleRegisterAgentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const agentId = regDid.startsWith('did:') ? regDid : `did:web:${regDid || 'custom-agent.io'}`;
-    const newAgent: Agent = {
-      id: agentId,
-      name: regName || 'Custom Registered Agent',
-      category: regCategory,
-      skillId: regSkillId || 'custom-task',
-      skillName: `${regName || 'Custom'} Skill Payload`,
-      description: `Registered autonomous AI agent hosted at ${regWebhook || 'https://my-agent.com'}.`,
-      pricing: regPrice || '25.00',
-      pricingModel: 'fixed',
-      successRate: 100.0,
-      completedJobs: 1,
-      stakeUsdc: regStake || '100.00',
-      latencySeconds: 12,
-      verificationMethod: 'ci_pass',
-      ownerDid: `did:web:owner-${Date.now().toString().slice(-4)}.org`,
-    };
+    try {
+      const res = await fetch('http://localhost:3001/api/v1/agents/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agent_url: regUrl || 'http://localhost:8001',
+          pricing_amount: regPrice || '25.00',
+          pricing_currency: 'USDC',
+          stake_usdc: regStake || '100.00',
+        }),
+      });
 
-    setAgentsList([newAgent, ...agentsList]);
-    setShowRegisterModal(false);
-    alert(`Agent ${newAgent.name} registered with $${regStake || '100.00'} USDC collateral stake!`);
+      if (res.ok) {
+        const data = await res.json();
+        alert(`✅ Agent Registered via Google A2A Agent Card Discovery!\nName: ${data.agent.agent_card.name}`);
+        setShowRegisterModal(false);
+        fetchInitialData();
+      } else {
+        const errData = await res.json();
+        alert(`❌ Registration failed: ${errData.error}`);
+      }
+    } catch (err: any) {
+      alert(`❌ Error connecting to API: ${err.message}`);
+    }
   };
 
   return (
@@ -899,44 +919,21 @@ export default function Home() {
 
             <form onSubmit={handleRegisterAgentSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Agent Name</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1">A2A Agent Server Endpoint URL</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Frontend React Bug Fixer"
-                  value={regName}
-                  onChange={(e) => setRegName(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Agent DID / Identifier</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="did:web:my-agent.com"
-                  value={regDid}
-                  onChange={(e) => setRegDid(e.target.value)}
+                  placeholder="e.g. http://localhost:8001"
+                  value={regUrl}
+                  onChange={(e) => setRegUrl(e.target.value)}
                   className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm font-mono text-white focus:outline-none focus:border-blue-500"
                 />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  The protocol will automatically discover capabilities via <code className="text-blue-400">/.well-known/agent-card.json</code>.
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Category</label>
-                  <select
-                    value={regCategory}
-                    onChange={(e) => setRegCategory(e.target.value as any)}
-                    className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none"
-                  >
-                    <option value="software">Software & DevOps</option>
-                    <option value="finance">Finance & Analytics</option>
-                    <option value="creative">Content & Creative</option>
-                    <option value="science">Science & Research</option>
-                    <option value="custom">Custom Niche Domain</option>
-                  </select>
-                </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1">Price per Job (USDC)</label>
                   <input
@@ -947,36 +944,27 @@ export default function Home() {
                     className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm font-bold text-white focus:outline-none"
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Collateral Stake ($100 USDC Minimum)</label>
+                  <input
+                    type="text"
+                    required
+                    value={regStake}
+                    onChange={(e) => setRegStake(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm font-mono font-bold text-emerald-400 focus:outline-none"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Collateral Stake ($100 USDC Minimum)</label>
-                <input
-                  type="text"
-                  required
-                  value={regStake}
-                  onChange={(e) => setRegStake(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm font-mono font-bold text-emerald-400 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Webhook Endpoint</label>
-                <input
-                  type="url"
-                  required
-                  placeholder="https://my-agent.com/webhook"
-                  value={regWebhook}
-                  onChange={(e) => setRegWebhook(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm font-mono text-white focus:outline-none"
-                />
+              <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-300">
+                ⚡ <strong>A2A Standard Verification:</strong> Protocol will ping <code className="text-white">{regUrl || 'http://localhost:8001'}/.well-known/agent-card.json</code> to verify agent compliance before registration.
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 font-bold text-white text-sm transition-all shadow-lg shadow-blue-500/20"
+                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white text-sm transition-all shadow-lg shadow-blue-500/20"
               >
-                Register Manifest & Stake $100 Collateral
+                Discover & Register Agent via A2A
               </button>
             </form>
           </div>

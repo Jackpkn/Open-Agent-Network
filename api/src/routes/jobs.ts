@@ -1,59 +1,89 @@
 import { FastifyInstance } from 'fastify';
-import { store } from '../services/store.js';
-import { JobContract } from '../types/index.js';
+import { store, Job } from '../services/store.js';
+import { a2aClient } from '../services/a2a-client.js';
+import { randomUUID } from 'crypto';
 
 export async function jobRoutes(fastify: FastifyInstance) {
-  // Get all jobs
+  /**
+   * GET /api/v1/jobs
+   * Get all active and completed jobs from SQLite
+   */
   fastify.get('/api/v1/jobs', async (request, reply) => {
     const jobs = store.getAllJobs();
     return reply.send({ jobs, total: jobs.length });
   });
 
-  // Create job contract off-chain index + Dispatch Real A2A Webhook
-  fastify.post<{ Body: { contract: JobContract } }>('/api/v1/jobs', async (request, reply) => {
-    const { contract } = request.body || {};
-    if (!contract || !contract.contract_id || !contract.payment) {
-      return reply.status(400).send({ error: 'Invalid job contract payload' });
+  /**
+   * POST /api/v1/jobs
+   * Create a job and dispatch to target agent over A2A JSON-RPC tasks/send protocol
+   */
+  fastify.post<{
+    Body: {
+      agent_id: number;
+      skill_id: string;
+      task_prompt: string;
+    };
+  }>('/api/v1/jobs', async (request, reply) => {
+    const { agent_id, skill_id, task_prompt } = request.body || {};
+
+    if (!agent_id || !task_prompt) {
+      return reply.status(400).send({ error: 'agent_id and task_prompt are required' });
     }
 
-    const result = store.createJob(contract);
-
-    // Look up worker agent manifest to dispatch real A2A RPC task
-    const workerAgent = store.getAgent(contract.worker.agent_id);
-    const webhookUrl = workerAgent?.endpoints?.webhook || (contract.worker.agent_id.includes('claude') ? 'http://localhost:8001/a2a/v1/rpc' : undefined);
-
-    if (webhookUrl) {
-      try {
-        const response = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            method: 'tasks/execute',
-            params: {
-              job_id: contract.contract_id,
-              source_code: contract.scope.description,
-            },
-            id: 1,
-          }),
-        });
-
-        if (response.ok) {
-          const resData: any = await response.json();
-          const rpcResult = resData.result || {};
-          if (rpcResult.output_cid) {
-            store.submitWork(contract.contract_id, rpcResult.output_cid, rpcResult.verification_proof || '0xProof');
-          }
-        }
-      } catch (err) {
-        console.warn(`[Fastify API] Agent Webhook ${webhookUrl} offline or not reachable. Job created in pending state.`);
-      }
+    const agent = store.getAgent(agent_id);
+    if (!agent) {
+      return reply.status(404).send({ error: `Agent with ID ${agent_id} not found` });
     }
 
-    return reply.status(201).send(result);
+    const jobId = `job-${randomUUID().slice(0, 8)}`;
+
+    // 1. Save Job in SQLite DB with status 'submitted'
+    const newJob: Job = store.createJob({
+      id: jobId,
+      agent_id: agent.id,
+      agent_url: agent.agent_url,
+      agent_name: agent.agent_card.name,
+      skill_id: skill_id || agent.agent_card.skills[0]?.id || 'general',
+      task_prompt: task_prompt,
+      status: 'submitted',
+      result_text: null,
+      result_artifacts: null,
+      pricing_amount: agent.pricing_amount || '25.00',
+      pricing_currency: agent.pricing_currency || 'USDC',
+    });
+
+    // 2. Dispatch task to Agent Server over A2A JSON-RPC 2.0 tasks/send
+    try {
+      store.updateJobStatus(jobId, 'working');
+
+      const a2aResponse = await a2aClient.sendTask(agent.agent_url, jobId, task_prompt);
+
+      store.updateJobStatus(
+        jobId,
+        a2aResponse.status === 'completed' ? 'completed' : 'working',
+        a2aResponse.output_text,
+        JSON.stringify(a2aResponse.artifacts || [])
+      );
+
+      const updatedJob = store.getJob(jobId);
+      return reply.status(201).send({
+        message: 'Job dispatched and processed over A2A protocol',
+        job: updatedJob,
+      });
+    } catch (err: any) {
+      store.updateJobStatus(jobId, 'failed', `A2A Execution Error: ${err.message}`);
+      const failedJob = store.getJob(jobId);
+      return reply.status(500).send({
+        error: `A2A Dispatch failed: ${err.message}`,
+        job: failedJob,
+      });
+    }
   });
 
-  // Get job contract by ID
+  /**
+   * GET /api/v1/jobs/:id
+   * Get job status and output by ID
+   */
   fastify.get<{ Params: { id: string } }>('/api/v1/jobs/:id', async (request, reply) => {
     const job = store.getJob(request.params.id);
     if (!job) {
@@ -61,42 +91,4 @@ export async function jobRoutes(fastify: FastifyInstance) {
     }
     return reply.send(job);
   });
-
-  // Submit work outcome
-  fastify.post<{ Params: { id: string }; Body: { output_cid: string; verification_proof: string } }>(
-    '/api/v1/jobs/:id/submit',
-    async (request, reply) => {
-      const { output_cid, verification_proof } = request.body || {};
-      if (!output_cid || !verification_proof) {
-        return reply.status(400).send({ error: 'Missing output_cid or verification_proof' });
-      }
-
-      try {
-        const result = store.submitWork(request.params.id, output_cid, verification_proof);
-        return reply.send(result);
-      } catch (err: any) {
-        return reply.status(404).send({ error: err.message });
-      }
-    }
-  );
-
-  // Verification trigger
-  fastify.post<{ Params: { id: string }; Body: { passed: boolean; quality_score?: number } }>(
-    '/api/v1/jobs/:id/verify',
-    async (request, reply) => {
-      const { passed, quality_score } = request.body || {};
-      const submission = store.getSubmission(request.params.id);
-
-      if (!submission) {
-        return reply.status(404).send({ error: 'Submission not found for this job' });
-      }
-
-      try {
-        const result = store.verifyJob(request.params.id, passed, quality_score);
-        return reply.send(result);
-      } catch (err: any) {
-        return reply.status(400).send({ error: err.message });
-      }
-    }
-  );
 }

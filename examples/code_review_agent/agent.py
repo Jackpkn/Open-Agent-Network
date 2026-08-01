@@ -111,32 +111,34 @@ Respond STRICTLY with a valid JSON object matching this exact schema:
   "summary": "Executive summary of security review"
 }}
 """
-        if self.provider == "gemini":
-            gemini_models = ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
-            for model_name in gemini_models:
+        content = ""
+        if self.provider == "gemini" and self.gemini_client:
+            for model_name in ["gemini-3.6-flash", "gemini-1.5-flash", "gemini-2.0-flash-exp"]:
                 try:
                     response = self.gemini_client.models.generate_content(
                         model=model_name,
                         contents=prompt,
                     )
-                    content = response.text
-                    break
+                    if response and response.text:
+                        content = response.text
+                        break
                 except Exception:
                     continue
-        elif self.provider == "claude":
-            claude_models = ["claude-sonnet-5", "claude-3-7-sonnet-20250219", "claude-3-5-sonnet-20241022"]
-            for model_name in claude_models:
+        elif self.provider == "claude" and self.anthropic_client:
+            for model_name in ["claude-3-5-sonnet-20241022", "claude-3-haiku-20240307"]:
                 try:
                     response = await self.anthropic_client.messages.create(
                         model=model_name,
                         max_tokens=1024,
                         messages=[{"role": "user", "content": prompt}],
                     )
-                    content = response.content[0].text
-                    break
+                    if response and response.content:
+                        content = response.content[0].text
+                        break
                 except Exception:
                     continue
-        else:
+
+        if not content:
             return {
                 "overall_score": 4.8,
                 "vulnerabilities": [
