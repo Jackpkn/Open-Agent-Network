@@ -21,7 +21,10 @@ for p in [agent_dir, sdk_path]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from agent import CodeReviewAgent
+try:
+    from agent import CodeReviewAgent
+except ImportError:
+    from .agent import CodeReviewAgent
 from open_agent_network import ACPClient
 
 class A2AAgentHandler(BaseHTTPRequestHandler):

@@ -1,6 +1,9 @@
 {
   "extraPaths": [
     "sdk/python",
-    "sdk/python/open_agent_network"
+    "sdk/python/open_agent_network",
+    "examples",
+    "examples/code_review_agent",
+    "examples/translation_agent"
   ]
 }
