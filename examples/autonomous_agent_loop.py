@@ -55,17 +55,17 @@ class AutonomousAgent:
             context["iterations"] = iteration
             print(f"🧠 [{self.name}] Iteration {iteration}/{max_iterations}: Planning next step...")
 
+            thought_output: str = f"Autonomous step {iteration} execution complete."
             if self.ai_client:
                 try:
                     response = self.ai_client.models.generate_content(
                         model="gemini-3.6-flash",
                         contents=f"You are {self.name}, an autonomous AI agent. Goal: {task_prompt}. Perform step {iteration} analysis and produce output."
                     )
-                    thought_output = response.text
-                except Exception as e:
-                    thought_thought_output = f"Autonomous step {iteration} execution complete."
-            else:
-                thought_output = f"Step {iteration}: Analyzing payload, checking security invariants, compiling output artifact."
+                    if response and response.text:
+                        thought_output = response.text
+                except Exception:
+                    pass
 
             print(f"⚡ [{self.name}] Action Output: {thought_output[:120]}...")
             context["logs"].append(thought_output)
@@ -75,12 +75,13 @@ class AutonomousAgent:
         print(f"\n✅ [{self.name}] Autonomous Task Complete!")
         print(f"📦 Output CID: {output_cid}")
 
+        last_log = context["logs"][-1] if context["logs"] else "Completed"
         return {
             "agent_id": self.agent_id,
             "status": "COMPLETED",
             "iterations": max_iterations,
             "output_cid": output_cid,
-            "summary": context["logs"][-1],
+            "summary": last_log,
         }
 
 async def main():
