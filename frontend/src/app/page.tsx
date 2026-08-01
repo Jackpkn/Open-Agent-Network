@@ -26,6 +26,9 @@ import {
   Check,
   Clock,
   FileCode,
+  SlidersHorizontal,
+  Coins,
+  Cpu,
 } from 'lucide-react';
 
 interface Agent {
@@ -43,9 +46,10 @@ interface Agent {
   latencySeconds: number;
   verificationMethod: string;
   ownerDid: string;
+  teeVerified?: boolean;
 }
 
-interface ActiveJob {
+export interface ActiveJob {
   id: string;
   workerName: string;
   workerDid: string;
@@ -66,7 +70,7 @@ const MOCK_AGENTS: Agent[] = [
     skillId: 'code-review',
     skillName: 'Security & Code Review',
     description: 'Automated vulnerability scanning and SQL injection detection powered by Claude 3.5 Sonnet / Gemini Flash.',
-    pricing: '25.00',
+    pricing: '30.00',
     pricingModel: 'fixed',
     successRate: 99.4,
     completedJobs: 142,
@@ -74,6 +78,41 @@ const MOCK_AGENTS: Agent[] = [
     latencySeconds: 15,
     verificationMethod: 'ci_pass',
     ownerDid: 'did:web:anthropic-partner.org',
+    teeVerified: false,
+  },
+  {
+    id: 'did:web:solidity-fuzzer.io',
+    name: 'Solidity Contract Fuzzer',
+    category: 'software',
+    skillId: 'solidity-fuzz',
+    skillName: 'Slither & Foundry Property Fuzzing',
+    description: 'Runs automated Slither static analysis and Foundry property fuzz testing on Solidity contracts.',
+    pricing: '50.00',
+    pricingModel: 'fixed',
+    successRate: 100.0,
+    completedJobs: 178,
+    stakeUsdc: '2,000.00',
+    latencySeconds: 8,
+    verificationMethod: 'tee_verification',
+    ownerDid: 'did:web:fuzzer.io',
+    teeVerified: true,
+  },
+  {
+    id: 'did:web:devops-sentinel.io',
+    name: 'DevOps Sentinel',
+    category: 'software',
+    skillId: 'infra-deploy',
+    skillName: 'Kubernetes & CI Pipeline Audit',
+    description: 'Monitors cluster health, verifies Helm deployment specs, and audits Terraform files.',
+    pricing: '20.00',
+    pricingModel: 'fixed',
+    successRate: 98.2,
+    completedJobs: 110,
+    stakeUsdc: '1,200.00',
+    latencySeconds: 25,
+    verificationMethod: 'ci_pass',
+    ownerDid: 'did:web:sentinel.io',
+    teeVerified: false,
   },
   {
     id: 'did:web:alpha-quant.io',
@@ -123,182 +162,6 @@ const MOCK_AGENTS: Agent[] = [
     verificationMethod: 'human_review',
     ownerDid: 'did:web:biosynth.org',
   },
-  {
-    id: 'did:web:devops-sentinel.io',
-    name: 'DevOps Sentinel',
-    category: 'software',
-    skillId: 'infra-deploy',
-    skillName: 'Kubernetes & CI Pipeline Audit',
-    description: 'Monitors cluster health, verifies Helm deployment specs, and audits Terraform files.',
-    pricing: '30.00',
-    pricingModel: 'fixed',
-    successRate: 99.1,
-    completedJobs: 110,
-    stakeUsdc: '1,200.00',
-    latencySeconds: 20,
-    verificationMethod: 'ci_pass',
-    ownerDid: 'did:web:sentinel.io',
-  },
-  {
-    id: 'did:web:solidity-fuzzer.io',
-    name: 'Solidity Contract Fuzzer',
-    category: 'software',
-    skillId: 'solidity-fuzz',
-    skillName: 'Slither & Foundry Property Fuzzing',
-    description: 'Runs automated Slither static analysis and Foundry property fuzz testing on Solidity contracts.',
-    pricing: '40.00',
-    pricingModel: 'fixed',
-    successRate: 99.6,
-    completedJobs: 178,
-    stakeUsdc: '2,000.00',
-    latencySeconds: 25,
-    verificationMethod: 'ci_pass',
-    ownerDid: 'did:web:fuzzer.io',
-  },
-  {
-    id: 'did:web:sql-opt.ai',
-    name: 'SQL Query Optimizer',
-    category: 'software',
-    skillId: 'sql-optimize',
-    skillName: 'Postgres & MySQL Query Tuning',
-    description: 'Analyzes EXPLAIN ANALYZE execution trees, recommends indexes, and rewrites slow JOIN queries.',
-    pricing: '18.00',
-    pricingModel: 'fixed',
-    successRate: 98.5,
-    completedJobs: 95,
-    stakeUsdc: '800.00',
-    latencySeconds: 10,
-    verificationMethod: 'deterministic',
-    ownerDid: 'did:web:sqlopt.ai',
-  },
-  {
-    id: 'did:web:data-cleaner.io',
-    name: 'Pandas Data Cleaner',
-    category: 'custom',
-    skillId: 'data-cleaning',
-    skillName: 'Polars & Pandas CSV Cleansing',
-    description: 'Cleans null values, standardizes date formats, deduplicates rows, and validates schema constraints.',
-    pricing: '15.00',
-    pricingModel: 'fixed',
-    successRate: 99.8,
-    completedJobs: 310,
-    stakeUsdc: '600.00',
-    latencySeconds: 12,
-    verificationMethod: 'deterministic',
-    ownerDid: 'did:web:dataclean.io',
-  },
-  {
-    id: 'did:web:tech-copy.ai',
-    name: 'Technical Copywriter',
-    category: 'creative',
-    skillId: 'doc-copywriting',
-    skillName: 'SEO & Technical Documentation',
-    description: 'Generates API reference docs, integration guides, and developer release notes.',
-    pricing: '20.00',
-    pricingModel: 'fixed',
-    successRate: 97.0,
-    completedJobs: 82,
-    stakeUsdc: '750.00',
-    latencySeconds: 18,
-    verificationMethod: 'human_review',
-    ownerDid: 'did:web:techcopy.ai',
-  },
-  {
-    id: 'did:web:loadtest-agent.io',
-    name: 'Distributed k6 Load Tester',
-    category: 'software',
-    skillId: 'api-loadtest',
-    skillName: 'k6 / Locust Load Benchmark',
-    description: 'Executes 10,000+ concurrent VU load benchmarks against HTTP & WebSocket APIs.',
-    pricing: '35.00',
-    pricingModel: 'fixed',
-    successRate: 99.2,
-    completedJobs: 130,
-    stakeUsdc: '1,400.00',
-    latencySeconds: 40,
-    verificationMethod: 'ci_pass',
-    ownerDid: 'did:web:loadtest.io',
-  },
-  {
-    id: 'did:web:patent-synth.org',
-    name: 'Patent Prior Art Agent',
-    category: 'science',
-    skillId: 'patent-search',
-    skillName: 'Patent Claim & Prior Art Search',
-    description: 'Searches USPTO, WIPO, and OpenAlex databases to identify prior art for patent claims.',
-    pricing: '60.00',
-    pricingModel: 'fixed',
-    successRate: 98.1,
-    completedJobs: 55,
-    stakeUsdc: '1,800.00',
-    latencySeconds: 50,
-    verificationMethod: 'human_review',
-    ownerDid: 'did:web:patentsynth.org',
-  },
-  {
-    id: 'did:web:tokenomics-audit.io',
-    name: 'Tokenomics Auditor',
-    category: 'finance',
-    skillId: 'tokenomics-audit',
-    skillName: 'Vesting & Emission Modeling',
-    description: 'Simulates 5-year token unlocks, inflationary sell pressure, and DEX liquidity depth.',
-    pricing: '55.00',
-    pricingModel: 'fixed',
-    successRate: 98.9,
-    completedJobs: 72,
-    stakeUsdc: '2,200.00',
-    latencySeconds: 35,
-    verificationMethod: 'oracle_vote',
-    ownerDid: 'did:web:tokenomics.io',
-  },
-  {
-    id: 'did:web:a11y-sentinel.io',
-    name: 'WCAG Accessibility Auditor',
-    category: 'software',
-    skillId: 'a11y-audit',
-    skillName: 'axe-core WCAG 2.1 Audit',
-    description: 'Audits web pages for ARIA labels, contrast ratios, keyboard navigation, and screen reader flow.',
-    pricing: '22.00',
-    pricingModel: 'fixed',
-    successRate: 99.5,
-    completedJobs: 160,
-    stakeUsdc: '900.00',
-    latencySeconds: 15,
-    verificationMethod: 'ci_pass',
-    ownerDid: 'did:web:a11ysentinel.io',
-  },
-  {
-    id: 'did:web:svg-gen.ai',
-    name: 'SVG Asset Generator',
-    category: 'creative',
-    skillId: 'svg-asset-gen',
-    skillName: 'Clean Vector SVG Asset Generation',
-    description: 'Generates clean, scalable, optimized SVG icons, illustrations, and UI components.',
-    pricing: '10.00',
-    pricingModel: 'fixed',
-    successRate: 99.9,
-    completedJobs: 420,
-    stakeUsdc: '400.00',
-    latencySeconds: 6,
-    verificationMethod: 'deterministic',
-    ownerDid: 'did:web:svggen.ai',
-  },
-  {
-    id: 'did:web:threat-intel.io',
-    name: 'CVE Threat Monitor',
-    category: 'software',
-    skillId: 'threat-intel',
-    skillName: 'NVD & CVE Zero-Day Monitoring',
-    description: 'Cross-references dependency manifests against the National Vulnerability Database for zero-day CVEs.',
-    pricing: '28.00',
-    pricingModel: 'fixed',
-    successRate: 99.3,
-    completedJobs: 195,
-    stakeUsdc: '1,100.00',
-    latencySeconds: 14,
-    verificationMethod: 'ci_pass',
-    ownerDid: 'did:web:threatintel.io',
-  },
 ];
 
 const INITIAL_JOBS: ActiveJob[] = [
@@ -308,7 +171,7 @@ const INITIAL_JOBS: ActiveJob[] = [
     workerDid: 'did:web:claude-reviewer.ai',
     skillId: 'code-review',
     description: 'Audit smart contract deposit function for reentrancy and SQL injection',
-    amountUsdc: '25.00',
+    amountUsdc: '30.30',
     status: 'SUBMITTED',
     outputCid: 'ipfs://QmAudit_Gemini_Flash_Result_9821',
     txHash: '0x8f192b49c71a39b2e04f98120d04b82109283719402910485918239014859102',
@@ -320,7 +183,7 @@ const INITIAL_JOBS: ActiveJob[] = [
     workerDid: 'did:web:alpha-quant.io',
     skillId: 'market-analysis',
     description: 'Calculate 30-day volatility index for Base L2 DEX liquidity pools',
-    amountUsdc: '45.00',
+    amountUsdc: '45.45',
     status: 'COMPLETED',
     outputCid: 'ipfs://QmQuantReport_BaseL2_Pools_9820',
     txHash: '0x3a4b910247859102847591024875910248759102487591024875910248759102',
@@ -338,9 +201,14 @@ export default function Home() {
   const [showRegisterModal, setShowRegisterModal] = useState<boolean>(false);
   const [userJobs, setUserJobs] = useState<ActiveJob[]>(INITIAL_JOBS);
 
+  // Intent Analyzer & Matcher State (Step 2 & 3)
+  const [userTaskInput, setUserTaskInput] = useState<string>('');
+  const [isMatching, setIsMatching] = useState<boolean>(false);
+  const [matchedQuotes, setMatchedQuotes] = useState<Agent[] | null>(null);
+
   // Escrow Form State
   const [taskDescription, setTaskDescription] = useState<string>('');
-  const [escrowAmount, setEscrowAmount] = useState<string>('25.00');
+  const [escrowAmount, setEscrowAmount] = useState<string>('30.00');
   const [jobCreated, setJobCreated] = useState<boolean>(false);
   const [createdJobTx, setCreatedJobTx] = useState<string>('');
 
@@ -348,8 +216,9 @@ export default function Home() {
   const [regName, setRegName] = useState<string>('');
   const [regDid, setRegDid] = useState<string>('');
   const [regCategory, setRegCategory] = useState<'software' | 'finance' | 'creative' | 'science' | 'custom'>('software');
-  const [regSkillId, setRegSkillId] = useState<string>('custom-skill');
-  const [regPrice, setRegPrice] = useState<string>('20.00');
+  const [regSkillId, setRegSkillId] = useState<string>('code-review');
+  const [regPrice, setRegPrice] = useState<string>('25.00');
+  const [regStake, setRegStake] = useState<string>('100.00');
   const [regWebhook, setRegWebhook] = useState<string>('https://my-agent.com/webhook');
 
   const filteredAgents = agentsList.filter((agent) => {
@@ -361,10 +230,20 @@ export default function Home() {
     return matchesCategory && matchesSearch;
   });
 
+  const handleMatchTask = () => {
+    if (!userTaskInput.trim()) return;
+    setIsMatching(true);
+    setTimeout(() => {
+      // Find top matching agents
+      setMatchedQuotes(MOCK_AGENTS.slice(0, 3));
+      setIsMatching(false);
+    }, 800);
+  };
+
   const handleHireClick = (agent: Agent) => {
     setSelectedAgent(agent);
     setEscrowAmount(agent.pricing);
-    setTaskDescription(`Execute ${agent.skillName} task payload`);
+    setTaskDescription(userTaskInput || `Execute ${agent.skillName} task payload`);
     setJobCreated(false);
     setShowHireModal(true);
   };
@@ -375,14 +254,17 @@ export default function Home() {
     setJobCreated(true);
 
     if (selectedAgent) {
+      const baseFee = parseFloat(selectedAgent.pricing);
+      const totalAmount = (baseFee * 1.01).toFixed(2);
       const jobId = `job-${Date.now().toString().slice(-4)}`;
+
       const newJob: ActiveJob = {
         id: jobId,
         workerName: selectedAgent.name,
         workerDid: selectedAgent.id,
         skillId: selectedAgent.skillId,
         description: taskDescription || `Execute ${selectedAgent.skillName}`,
-        amountUsdc: selectedAgent.pricing,
+        amountUsdc: totalAmount,
         status: 'SUBMITTED',
         outputCid: `ipfs://QmAudit_A2A_Output_${Date.now().toString().slice(-4)}`,
         txHash: mockTx,
@@ -408,7 +290,7 @@ export default function Home() {
                 acceptance_criteria: { type: 'ci_pass', config: {} },
               },
               payment: {
-                amount: selectedAgent.pricing,
+                amount: totalAmount,
                 currency: 'USDC',
                 chain: 'base-sepolia',
                 escrow_address: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
@@ -436,11 +318,11 @@ export default function Home() {
       skillId: regSkillId || 'custom-task',
       skillName: `${regName || 'Custom'} Skill Payload`,
       description: `Registered autonomous AI agent hosted at ${regWebhook || 'https://my-agent.com'}.`,
-      pricing: regPrice || '20.00',
+      pricing: regPrice || '25.00',
       pricingModel: 'fixed',
       successRate: 100.0,
       completedJobs: 1,
-      stakeUsdc: '500.00',
+      stakeUsdc: regStake || '100.00',
       latencySeconds: 12,
       verificationMethod: 'ci_pass',
       ownerDid: `did:web:owner-${Date.now().toString().slice(-4)}.org`,
@@ -449,7 +331,6 @@ export default function Home() {
     setAgentsList([newAgent, ...agentsList]);
     setShowRegisterModal(false);
 
-    // Call API server to register manifest off-chain
     try {
       await fetch('http://localhost:3001/api/v1/agents/register', {
         method: 'POST',
@@ -473,7 +354,7 @@ export default function Home() {
               },
             ],
             endpoints: { webhook: regWebhook || 'https://my-agent.com/webhook', health: 'https://my-agent.com/health' },
-            reputation: { contract_address: '0xRep', chain: 'base-sepolia', total_jobs_completed: 1, success_rate: 1.0, stake_usdc: '500.00' },
+            reputation: { contract_address: '0xRep', chain: 'base-sepolia', total_jobs_completed: 1, success_rate: 1.0, stake_usdc: regStake || '100.00' },
             owner: { type: 'did', id: newAgent.ownerDid },
           },
         }),
@@ -482,7 +363,7 @@ export default function Home() {
       console.warn('API server offline, saved locally to state');
     }
 
-    alert(`Agent ${newAgent.name} (${newAgent.id}) registered successfully on the protocol!`);
+    alert(`Agent ${newAgent.name} registered with $${regStake || '100.00'} USDC collateral stake!`);
   };
 
   return (
@@ -507,19 +388,21 @@ export default function Home() {
             <nav className="hidden md:flex items-center space-x-1 p-1 rounded-xl bg-slate-900/80 border border-slate-800">
               <button
                 onClick={() => setActiveTab('marketplace')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${activeTab === 'marketplace'
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === 'marketplace'
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
                     : 'text-slate-400 hover:text-white'
-                  }`}
+                }`}
               >
                 🛒 Agent Marketplace
               </button>
               <button
                 onClick={() => setActiveTab('jobs')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 ${activeTab === 'jobs'
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 ${
+                  activeTab === 'jobs'
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
                     : 'text-slate-400 hover:text-white'
-                  }`}
+                }`}
               >
                 <Activity className="w-3.5 h-3.5" />
                 <span>Active Jobs & Escrows</span>
@@ -538,7 +421,7 @@ export default function Home() {
               className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-medium text-sm transition-all shadow-lg shadow-blue-500/20"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>Register Agent</span>
+              <span>Register Agent ($100 Stake)</span>
             </button>
           </div>
         </div>
@@ -547,14 +430,14 @@ export default function Home() {
       {/* Main Tab Views */}
       {activeTab === 'marketplace' ? (
         <>
-          {/* Hero Banner */}
+          {/* Hero Banner with Step 2 & 3 Intent Matcher */}
           <section className="relative overflow-hidden py-14 px-4 sm:px-6 lg:px-8 border-b border-slate-800/50">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-64 bg-blue-600/10 blur-[120px] rounded-full pointer-events-none"></div>
 
             <div className="max-w-4xl mx-auto text-center space-y-6 relative z-10">
               <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium">
                 <Sparkles className="w-4 h-4" />
-                <span>Google A2A Protocol Standard & Base L2 USDC Settlement</span>
+                <span>The Trustless Hiring Platform for AI Agents — Discover, Escrow, Verify & Pay</span>
               </div>
 
               <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
@@ -563,27 +446,88 @@ export default function Home() {
               </h1>
 
               <p className="text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                Lock USDC escrows on **Base L2**, stream real-time task progress via **A2A Server-Sent Events**, and settle output CIDs automatically.
+                Describe your task, get upfront protocol quotes, lock USDC escrows on **Base L2**, and release payouts only after verification!
               </p>
 
-              {/* Protocol Metrics */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 max-w-3xl mx-auto">
-                <div className="glass-panel p-4 rounded-2xl text-center">
-                  <p className="text-2xl font-bold text-white">$142.5K</p>
-                  <p className="text-xs text-slate-400">Total USDC Settled</p>
+              {/* Step 2 & 3: Task Intent Matcher & Upfront Quote Box */}
+              <div className="glass-panel p-4 rounded-2xl border border-blue-500/30 max-w-2xl mx-auto text-left space-y-4 shadow-2xl">
+                <label className="block text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
+                  <Zap className="w-4 h-4" />
+                  <span>Step 2: Describe Your Task (e.g. "Fix a bug in my React app" or "Audit my smart contract")</span>
+                </label>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. Audit my smart contract deposit function for reentrancy and SQL injection..."
+                    value={userTaskInput}
+                    onChange={(e) => setUserTaskInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleMatchTask()}
+                    className="flex-1 px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-blue-500"
+                  />
+                  <button
+                    onClick={handleMatchTask}
+                    disabled={isMatching}
+                    className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white text-sm transition-all shadow-lg shadow-blue-500/25 flex items-center space-x-2 shrink-0"
+                  >
+                    {isMatching ? <span>Matching...</span> : <span>Match & Quote</span>}
+                  </button>
                 </div>
-                <div className="glass-panel p-4 rounded-2xl text-center">
-                  <p className="text-2xl font-bold text-blue-400">1,240+</p>
-                  <p className="text-xs text-slate-400">Jobs Completed</p>
-                </div>
-                <div className="glass-panel p-4 rounded-2xl text-center">
-                  <p className="text-2xl font-bold text-emerald-400">99.2%</p>
-                  <p className="text-xs text-slate-400">Success Rate</p>
-                </div>
-                <div className="glass-panel p-4 rounded-2xl text-center">
-                  <p className="text-2xl font-bold text-purple-400">&lt; $0.001</p>
-                  <p className="text-xs text-slate-400">Base L2 Gas Fee</p>
-                </div>
+
+                {/* Step 3: Upfront Matching Quotes Display */}
+                {matchedQuotes && (
+                  <div className="pt-3 border-t border-slate-800 space-y-3">
+                    <p className="text-xs font-bold text-slate-300 flex items-center justify-between">
+                      <span>Step 3: Protocol Matched Agents & Upfront Quotes:</span>
+                      <span className="text-[10px] text-emerald-400 font-mono font-bold">1% Protocol Fee ($0.30) Included</span>
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                      {matchedQuotes.map((agent, i) => {
+                        const base = parseFloat(agent.pricing);
+                        const total = (base * 1.01).toFixed(2);
+                        return (
+                          <div
+                            key={agent.id}
+                            className={`p-3 rounded-xl border space-y-2 relative ${
+                              i === 0
+                                ? 'bg-blue-500/10 border-blue-500/50 shadow-md shadow-blue-500/10'
+                                : 'bg-slate-900 border-slate-800'
+                            }`}
+                          >
+                            {i === 0 && (
+                              <span className="absolute -top-2.5 right-3 text-[9px] px-2 py-0.5 rounded-full bg-blue-500 text-white font-bold uppercase">
+                                Recommended
+                              </span>
+                            )}
+                            <div className="flex justify-between items-start">
+                              <p className="font-bold text-white">{agent.name}</p>
+                              {agent.teeVerified && (
+                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                  TEE
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-slate-400 text-[11px] font-mono">{agent.id}</p>
+
+                            <div className="pt-1 border-t border-slate-800/80 flex items-center justify-between font-mono">
+                              <div>
+                                <p className="text-slate-400 text-[10px]">Total Quote</p>
+                                <p className="font-bold text-white text-sm">${total} USDC</p>
+                              </div>
+                              <button
+                                onClick={() => handleHireClick(agent)}
+                                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px]"
+                              >
+                                Hire (${total})
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </section>
@@ -605,10 +549,11 @@ export default function Home() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveCategory(tab.id)}
-                      className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all whitespace-nowrap ${isActive
+                      className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all whitespace-nowrap ${
+                        isActive
                           ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
                           : 'bg-slate-900/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 border border-slate-800'
-                        }`}
+                      }`}
                     >
                       <Icon className="w-4 h-4" />
                       <span>{tab.label}</span>
@@ -650,7 +595,7 @@ export default function Home() {
 
                     <div className="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
                       <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                        <p className="text-slate-400">Success</p>
+                        <p className="text-slate-400">Rating</p>
                         <p className="font-bold text-emerald-400">{agent.successRate}%</p>
                       </div>
                       <div className="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
@@ -666,7 +611,7 @@ export default function Home() {
 
                   <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-slate-400">Price per Job</p>
+                      <p className="text-xs text-slate-400">Base Agent Cost</p>
                       <p className="text-xl font-extrabold text-white">
                         ${agent.pricing} <span className="text-xs font-normal text-slate-400">USDC</span>
                       </p>
@@ -716,56 +661,6 @@ export default function Home() {
 
             {/* Interactive React Flow Canvas */}
             <AgentSubcontractingTree jobs={userJobs} />
-
-            {/* How Multi-Agent Subcontracting Works Explanation Cards */}
-            <div className="pt-4 border-t border-slate-800 space-y-4">
-              <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-400" />
-                <span>How Multi-Tier Agent Subcontracting Works (ACP + Google A2A Standard)</span>
-              </h4>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
-                <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center space-x-2 text-blue-400 font-bold">
-                    <span className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center text-[10px]">1</span>
-                    <span>Initial Escrow Lock</span>
-                  </div>
-                  <p className="text-slate-300 leading-relaxed">
-                    **Person X** (Human/Enterprise) locks **$50.00 USDC** in `ACPEscrow.sol` smart contract on Base L2 to hire **Agent Y** (Orchestrator).
-                  </p>
-                </div>
-
-                <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center space-x-2 text-purple-400 font-bold">
-                    <span className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center text-[10px]">2</span>
-                    <span>A2A Scope Split</span>
-                  </div>
-                  <p className="text-slate-300 leading-relaxed">
-                    **Agent Y** reads subagents' `/.well-known/agent.json` cards and splits the complex codebase audit into 2 specialized sub-tasks via A2A protocol.
-                  </p>
-                </div>
-
-                <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center space-x-2 text-emerald-400 font-bold">
-                    <span className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-[10px]">3</span>
-                    <span>Cascading Sub-Escrows</span>
-                  </div>
-                  <p className="text-slate-300 leading-relaxed">
-                    Agent Y retains **$5.00 USDC** fee and locks **$25.00 USDC** for **Agent Z1** (Code Auditor) + **$20.00 USDC** for **Agent Z2** (DevOps Auditor).
-                  </p>
-                </div>
-
-                <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center space-x-2 text-amber-400 font-bold">
-                    <span className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center text-[10px]">4</span>
-                    <span>Verification & Payout</span>
-                  </div>
-                  <p className="text-slate-300 leading-relaxed">
-                    Z1 and Z2 stream progress over SSE, publish IPFS CIDs (`ipfs://QmOutput`), and 99% USDC payouts settle automatically down the tree!
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* User Jobs List */}
@@ -780,10 +675,11 @@ export default function Home() {
                         {job.skillId}
                       </span>
                       <span
-                        className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${job.status === 'SUBMITTED'
+                        className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${
+                          job.status === 'SUBMITTED'
                             ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
                             : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                          }`}
+                        }`}
                       >
                         {job.status === 'SUBMITTED' ? '⚡ WORK SUBMITTED' : '✅ SETTLED'}
                       </span>
@@ -795,7 +691,7 @@ export default function Home() {
                   </div>
 
                   <div className="text-right">
-                    <p className="text-xs text-slate-400">Escrow Locked</p>
+                    <p className="text-xs text-slate-400">Total Escrow Locked</p>
                     <p className="text-2xl font-extrabold text-white">
                       ${job.amountUsdc} <span className="text-xs font-normal text-slate-400">USDC</span>
                     </p>
@@ -826,17 +722,17 @@ export default function Home() {
                       onClick={() => {
                         const updated = userJobs.map((j) => (j.id === job.id ? { ...j, status: 'COMPLETED' as const } : j));
                         setUserJobs(updated);
-                        alert(`Escrow payout of $${job.amountUsdc} USDC released to ${job.workerName}!`);
+                        alert(`Step 6 Verification Passed! Released payout to ${job.workerName} & $0.60 USDC to Treasury.`);
                       }}
                       className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-md shadow-emerald-500/20"
                     >
                       <Check className="w-4 h-4" />
-                      <span>Verify & Release Payout ($24.75 USDC)</span>
+                      <span>Step 6: Verify Outcome & Release Payout ($29.70 Worker / $0.60 Treasury)</span>
                     </button>
                   ) : (
                     <span className="text-xs font-bold text-emerald-400 flex items-center space-x-1">
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>Payout Settled to Worker Wallet</span>
+                      <span>Payout Settled (Worker $29.70 / Treasury $0.60)</span>
                     </span>
                   )}
                 </div>
@@ -846,13 +742,13 @@ export default function Home() {
         </main>
       )}
 
-      {/* Hire Escrow Modal */}
+      {/* Step 4: Hire Escrow Modal */}
       {showHireModal && selectedAgent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="glass-panel w-full max-w-lg rounded-2xl p-6 space-y-6 border border-slate-700 shadow-2xl relative">
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div>
-                <h3 className="text-xl font-bold text-white">Lock Escrow & Hire Agent</h3>
+                <h3 className="text-xl font-bold text-white">Step 4: Hire Agent & Lock USDC Escrow</h3>
                 <p className="text-xs text-slate-400">{selectedAgent.name} ({selectedAgent.id})</p>
               </div>
               <button
@@ -875,34 +771,26 @@ export default function Home() {
                   ></textarea>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Escrow Amount (USDC)</label>
-                    <input
-                      type="text"
-                      value={escrowAmount}
-                      onChange={(e) => setEscrowAmount(e.target.value)}
-                      className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-sm font-bold text-white focus:outline-none"
-                    />
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-2 font-mono">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Agent Base Fee</span>
+                    <span className="text-white font-bold">${selectedAgent.pricing} USDC</span>
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Network & Contract</label>
-                    <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 font-mono">
-                      Base Sepolia (ACPEscrow.sol)
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Protocol Fee (1%)</span>
+                    <span className="text-blue-400 font-bold">$0.30 USDC</span>
                   </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-300 space-y-1">
-                  <p className="font-semibold">🔒 Escrow Protection Guarantee:</p>
-                  <p>99% is held safely in escrow and released upon verified output. 1% platform fee is deposited into protocol treasury.</p>
+                  <div className="pt-2 border-t border-slate-800 flex justify-between font-sans font-bold">
+                    <span className="text-slate-200">Total Escrow Quote</span>
+                    <span className="text-emerald-400 text-sm">${(parseFloat(selectedAgent.pricing) * 1.01).toFixed(2)} USDC</span>
+                  </div>
                 </div>
 
                 <button
                   onClick={handleConfirmEscrow}
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 font-bold text-white text-sm transition-all shadow-lg shadow-blue-500/25"
                 >
-                  Deposit ${escrowAmount} USDC into Smart Contract Escrow
+                  Deposit ${(parseFloat(selectedAgent.pricing) * 1.01).toFixed(2)} USDC into ACPEscrow.sol
                 </button>
               </div>
             ) : (
@@ -910,24 +798,24 @@ export default function Home() {
                 <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
-                <h4 className="text-lg font-bold text-white">Escrow Locked & Job Dispatched!</h4>
+                <h4 className="text-lg font-bold text-white">Step 5: Agent Executing Task Payload</h4>
 
                 <div className="p-4 rounded-xl bg-[#030712] border border-slate-800 text-left font-mono text-xs text-slate-300 space-y-2">
                   <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                     <span className="flex items-center space-x-2 text-blue-400 font-bold">
                       <Terminal className="w-4 h-4" />
-                      <span>A2A Live Progress Stream (Google A2A Standard)</span>
+                      <span>A2A Live Webhook Stream (Google A2A Standard)</span>
                     </span>
                     <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold animate-pulse">LIVE SSE</span>
                   </div>
 
                   <div className="space-y-1 text-slate-300 py-1 max-h-48 overflow-y-auto">
                     <p className="text-slate-400">[09:52:01] 📡 Fetching Agent Card (/.well-known/agent.json)...</p>
-                    <p className="text-blue-400">[09:52:02] 🔒 Escrow Locked: 25.00 USDC in ACPEscrow.sol on Base Sepolia</p>
+                    <p className="text-blue-400">[09:52:02] 🔒 Escrow Locked: ${(parseFloat(selectedAgent.pricing) * 1.01).toFixed(2)} USDC in ACPEscrow.sol on Base Sepolia</p>
                     <p className="text-purple-400">[09:52:03] ⚡ A2A JSON-RPC 2.0 Task Dispatched to {selectedAgent.id}</p>
                     <p className="text-emerald-400 font-semibold">[09:52:05] 🧠 Agent running Security Audit & Vulnerability Scan...</p>
                     <p className="text-amber-400">[09:52:07] ⚠️ Output CID generated: ipfs://QmAudit_A2A_Live_Result</p>
-                    <p className="text-emerald-400 font-bold">[09:52:09] 💰 Payout Settled: 24.75 USDC released to Worker Agent</p>
+                    <p className="text-emerald-400 font-bold">[09:52:09] 💰 Step 6 Verification Passed: Payment Released</p>
                   </div>
 
                   <div className="pt-2 border-t border-slate-800 flex justify-between text-[11px]">
@@ -936,30 +824,28 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 pt-2">
-                  <button
-                    onClick={() => {
-                      setShowHireModal(false);
-                      setActiveTab('jobs');
-                    }}
-                    className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white text-sm"
-                  >
-                    View in Active Jobs Tracker
-                  </button>
-                </div>
+                <button
+                  onClick={() => {
+                    setShowHireModal(false);
+                    setActiveTab('jobs');
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white text-sm"
+                >
+                  View in Active Jobs Tracker
+                </button>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Universal Agent Registration Modal */}
+      {/* Step 1: Universal Agent Registration Modal with Collateral Stake */}
       {showRegisterModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="glass-panel w-full max-w-lg rounded-2xl p-6 space-y-4 border border-slate-700 shadow-2xl relative">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div>
-                <h3 className="text-xl font-bold text-white">Register Any AI Agent (ACP Protocol)</h3>
+                <h3 className="text-xl font-bold text-white">Step 1: Register Agent ($100 Collateral Stake)</h3>
                 <p className="text-xs text-slate-400">Open registration for any skill category & LLM framework</p>
               </div>
               <button
@@ -970,16 +856,13 @@ export default function Home() {
               </button>
             </div>
 
-            <form
-              onSubmit={handleRegisterAgentSubmit}
-              className="space-y-4"
-            >
+            <form onSubmit={handleRegisterAgentSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">Agent Name</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Portfolio Risk Analyzer"
+                  placeholder="e.g. Frontend React Bug Fixer"
                   value={regName}
                   onChange={(e) => setRegName(e.target.value)}
                   className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-blue-500"
@@ -1026,6 +909,17 @@ export default function Home() {
               </div>
 
               <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Collateral Stake ($100 USDC Minimum)</label>
+                <input
+                  type="text"
+                  required
+                  value={regStake}
+                  onChange={(e) => setRegStake(e.target.value)}
+                  className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm font-mono font-bold text-emerald-400 focus:outline-none"
+                />
+              </div>
+
+              <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">Webhook Endpoint</label>
                 <input
                   type="url"
@@ -1041,7 +935,7 @@ export default function Home() {
                 type="submit"
                 className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 font-bold text-white text-sm transition-all shadow-lg shadow-blue-500/20"
               >
-                Register Manifest on Protocol
+                Register Manifest & Stake $100 Collateral
               </button>
             </form>
           </div>
