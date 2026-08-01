@@ -231,11 +231,10 @@ export function AgentSubcontractingTree({ jobs }: AgentSubcontractingTreeProps) 
             <button
               key={job.id}
               onClick={() => setSelectedJobIndex(idx)}
-              className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all ${
-                selectedJobIndex === idx
+              className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all ${selectedJobIndex === idx
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
                   : 'bg-slate-800 text-slate-400 hover:text-white'
-              }`}
+                }`}
             >
               {job.id} (${job.amountUsdc})
             </button>

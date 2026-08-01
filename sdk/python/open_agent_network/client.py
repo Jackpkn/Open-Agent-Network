@@ -111,10 +111,10 @@ class ACPClient:
 
     def __init__(
         self,
-        api_base_url: str,
-        chain_rpc_url: str,
-        escrow_contract_address: str,
-        usdc_address: str,
+        api_base_url: str = "http://localhost:3001",
+        chain_rpc_url: str = "https://sepolia.base.org",
+        escrow_contract_address: str = "0x0000000000000000000000000000000000000000",
+        usdc_address: str = "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
         private_key: Optional[str] = None,
     ):
         self.api_base_url = api_base_url.rstrip("/")
