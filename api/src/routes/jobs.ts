@@ -3,6 +3,12 @@ import { store } from '../services/store.js';
 import { JobContract } from '../types/index.js';
 
 export async function jobRoutes(fastify: FastifyInstance) {
+  // Get all jobs
+  fastify.get('/api/v1/jobs', async (request, reply) => {
+    const jobs = store.getAllJobs();
+    return reply.send({ jobs, total: jobs.length });
+  });
+
   // Create job contract off-chain index
   fastify.post<{ Body: { contract: JobContract } }>('/api/v1/jobs', async (request, reply) => {
     const { contract } = request.body || {};

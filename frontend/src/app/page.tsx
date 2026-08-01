@@ -172,6 +172,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'marketplace' | 'jobs'>('marketplace');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [agentsList, setAgentsList] = useState<Agent[]>(MOCK_AGENTS);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [showHireModal, setShowHireModal] = useState<boolean>(false);
   const [showRegisterModal, setShowRegisterModal] = useState<boolean>(false);
@@ -186,12 +187,12 @@ export default function Home() {
   // Agent Register Form State
   const [regName, setRegName] = useState<string>('');
   const [regDid, setRegDid] = useState<string>('');
-  const [regCategory, setRegCategory] = useState<string>('software');
-  const [regSkillId, setRegSkillId] = useState<string>('');
+  const [regCategory, setRegCategory] = useState<'software' | 'finance' | 'creative' | 'science' | 'custom'>('software');
+  const [regSkillId, setRegSkillId] = useState<string>('custom-skill');
   const [regPrice, setRegPrice] = useState<string>('20.00');
-  const [regWebhook, setRegWebhook] = useState<string>('');
+  const [regWebhook, setRegWebhook] = useState<string>('https://my-agent.com/webhook');
 
-  const filteredAgents = MOCK_AGENTS.filter((agent) => {
+  const filteredAgents = agentsList.filter((agent) => {
     const matchesCategory = activeCategory === 'all' || agent.category === activeCategory;
     const matchesSearch =
       agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -208,14 +209,15 @@ export default function Home() {
     setShowHireModal(true);
   };
 
-  const handleConfirmEscrow = () => {
+  const handleConfirmEscrow = async () => {
     const mockTx = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
     setCreatedJobTx(mockTx);
     setJobCreated(true);
 
     if (selectedAgent) {
+      const jobId = `job-${Date.now().toString().slice(-4)}`;
       const newJob: ActiveJob = {
-        id: `job-${Date.now().toString().slice(-4)}`,
+        id: jobId,
         workerName: selectedAgent.name,
         workerDid: selectedAgent.id,
         skillId: selectedAgent.skillId,
@@ -226,8 +228,101 @@ export default function Home() {
         txHash: mockTx,
         createdAt: 'Just now',
       };
+
       setUserJobs([newJob, ...userJobs]);
+
+      // Call API server to index job off-chain
+      try {
+        await fetch('http://localhost:3001/api/v1/jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contract: {
+              contract_id: jobId,
+              hirer: { agent_id: 'did:web:user-wallet.eth', address: '0xUserWallet' },
+              worker: { agent_id: selectedAgent.id, address: '0xWorkerAgent' },
+              scope: {
+                skill_id: selectedAgent.skillId,
+                description: taskDescription,
+                input_cid: 'ipfs://QmInputPayload',
+                acceptance_criteria: { type: 'ci_pass', config: {} },
+              },
+              payment: {
+                amount: selectedAgent.pricing,
+                currency: 'USDC',
+                chain: 'base-sepolia',
+                escrow_address: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
+                milestone_split: [{ percent: 100, trigger: 'work_submitted' }],
+              },
+              timeline: { created_at: new Date().toISOString(), deadline: new Date().toISOString() },
+              dispute: { arbitrator: 'did:web:arb.org', arbitrator_address: '0xArb', fee_percent: 5 },
+            },
+          }),
+        });
+      } catch (err) {
+        console.warn('API server offline, saved locally to state');
+      }
     }
+  };
+
+  const handleRegisterAgentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const agentId = regDid.startsWith('did:') ? regDid : `did:web:${regDid || 'custom-agent.io'}`;
+    const newAgent: Agent = {
+      id: agentId,
+      name: regName || 'Custom Registered Agent',
+      category: regCategory,
+      skillId: regSkillId || 'custom-task',
+      skillName: `${regName || 'Custom'} Skill Payload`,
+      description: `Registered autonomous AI agent hosted at ${regWebhook || 'https://my-agent.com'}.`,
+      pricing: regPrice || '20.00',
+      pricingModel: 'fixed',
+      successRate: 100.0,
+      completedJobs: 1,
+      stakeUsdc: '500.00',
+      latencySeconds: 12,
+      verificationMethod: 'ci_pass',
+      ownerDid: `did:web:owner-${Date.now().toString().slice(-4)}.org`,
+    };
+
+    setAgentsList([newAgent, ...agentsList]);
+    setShowRegisterModal(false);
+
+    // Call API server to register manifest off-chain
+    try {
+      await fetch('http://localhost:3001/api/v1/agents/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          manifest: {
+            agent_id: newAgent.id,
+            name: newAgent.name,
+            version: '1.0.0',
+            capabilities: [
+              {
+                skill_id: newAgent.skillId,
+                name: newAgent.skillName,
+                description: newAgent.description,
+                input_schema: 'ipfs://QmInputSchema',
+                output_schema: 'ipfs://QmOutputSchema',
+                pricing: { amount: newAgent.pricing, currency: 'USDC', chain: 'base-sepolia', model: 'fixed' },
+                avg_latency_seconds: newAgent.latencySeconds,
+                verification_method: 'ci_pass',
+                tee_required: false,
+              },
+            ],
+            endpoints: { webhook: regWebhook || 'https://my-agent.com/webhook', health: 'https://my-agent.com/health' },
+            reputation: { contract_address: '0xRep', chain: 'base-sepolia', total_jobs_completed: 1, success_rate: 1.0, stake_usdc: '500.00' },
+            owner: { type: 'did', id: newAgent.ownerDid },
+          },
+        }),
+      });
+    } catch (err) {
+      console.warn('API server offline, saved locally to state');
+    }
+
+    alert(`Agent ${newAgent.name} (${newAgent.id}) registered successfully on the protocol!`);
   };
 
   return (
@@ -252,21 +347,19 @@ export default function Home() {
             <nav className="hidden md:flex items-center space-x-1 p-1 rounded-xl bg-slate-900/80 border border-slate-800">
               <button
                 onClick={() => setActiveTab('marketplace')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  activeTab === 'marketplace'
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${activeTab === 'marketplace'
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 🛒 Agent Marketplace
               </button>
               <button
                 onClick={() => setActiveTab('jobs')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 ${
-                  activeTab === 'jobs'
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 ${activeTab === 'jobs'
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 <Activity className="w-3.5 h-3.5" />
                 <span>Active Jobs & Escrows</span>
@@ -352,11 +445,10 @@ export default function Home() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveCategory(tab.id)}
-                      className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all whitespace-nowrap ${
-                        isActive
+                      className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all whitespace-nowrap ${isActive
                           ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
                           : 'bg-slate-900/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 border border-slate-800'
-                      }`}
+                        }`}
                     >
                       <Icon className="w-4 h-4" />
                       <span>{tab.label}</span>
@@ -528,11 +620,10 @@ export default function Home() {
                         {job.skillId}
                       </span>
                       <span
-                        className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${
-                          job.status === 'SUBMITTED'
+                        className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${job.status === 'SUBMITTED'
                             ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
                             : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                        }`}
+                          }`}
                       >
                         {job.status === 'SUBMITTED' ? '⚡ WORK SUBMITTED' : '✅ SETTLED'}
                       </span>
@@ -720,11 +811,7 @@ export default function Home() {
             </div>
 
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setShowRegisterModal(false);
-                alert(`Agent ${regName} (${regDid}) registered successfully!`);
-              }}
+              onSubmit={handleRegisterAgentSubmit}
               className="space-y-4"
             >
               <div>
@@ -756,7 +843,7 @@ export default function Home() {
                   <label className="block text-xs font-medium text-slate-300 mb-1">Category</label>
                   <select
                     value={regCategory}
-                    onChange={(e) => setRegCategory(e.target.value)}
+                    onChange={(e) => setRegCategory(e.target.value as any)}
                     className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none"
                   >
                     <option value="software">Software & DevOps</option>
