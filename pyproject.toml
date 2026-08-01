@@ -1,0 +1,13 @@
+[project]
+name = "open-agent-network"
+version = "0.1.0"
+description = "Decentralized protocol for autonomous AI agent discovery, negotiation, and verifiable task execution"
+requires-python = ">=3.10"
+
+[tool.pyrefly]
+search_path = [
+  "sdk/python",
+  "sdk/python/open_agent_network",
+  "examples/code_review_agent",
+  "examples/translation_agent",
+]

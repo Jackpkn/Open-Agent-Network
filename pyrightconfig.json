@@ -1,4 +1,10 @@
 {
+  "searchPath": [
+    "sdk/python",
+    "sdk/python/open_agent_network",
+    "examples/code_review_agent",
+    "examples/translation_agent"
+  ],
   "extraPaths": [
     "sdk/python",
     "sdk/python/open_agent_network",
