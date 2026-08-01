@@ -408,6 +408,19 @@ class DataStore {
   getSubmission(jobId: string): JobSubmission | undefined {
     return this.submissions.get(jobId);
   }
+
+  verifyJob(jobId: string, passed: boolean, qualityScore?: number): { status: string; verified_at: string } {
+    const submission = this.submissions.get(jobId);
+    if (!submission) {
+      throw new Error(`Submission for job ${jobId} not found`);
+    }
+
+    submission.status = passed ? 'verified' : 'disputed';
+    return {
+      status: submission.status,
+      verified_at: new Date().toISOString(),
+    };
+  }
 }
 
 export const store = new DataStore();

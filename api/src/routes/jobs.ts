@@ -9,7 +9,7 @@ export async function jobRoutes(fastify: FastifyInstance) {
     return reply.send({ jobs, total: jobs.length });
   });
 
-  // Create job contract off-chain index
+  // Create job contract off-chain index + Dispatch Real A2A Webhook
   fastify.post<{ Body: { contract: JobContract } }>('/api/v1/jobs', async (request, reply) => {
     const { contract } = request.body || {};
     if (!contract || !contract.contract_id || !contract.payment) {
@@ -17,6 +17,39 @@ export async function jobRoutes(fastify: FastifyInstance) {
     }
 
     const result = store.createJob(contract);
+
+    // Look up worker agent manifest to dispatch real A2A RPC task
+    const workerAgent = store.getAgent(contract.worker.agent_id);
+    const webhookUrl = workerAgent?.endpoints?.webhook || (contract.worker.agent_id.includes('claude') ? 'http://localhost:8001/a2a/v1/rpc' : undefined);
+
+    if (webhookUrl) {
+      try {
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'tasks/execute',
+            params: {
+              job_id: contract.contract_id,
+              source_code: contract.scope.description,
+            },
+            id: 1,
+          }),
+        });
+
+        if (response.ok) {
+          const resData: any = await response.json();
+          const rpcResult = resData.result || {};
+          if (rpcResult.output_cid) {
+            store.submitWork(contract.contract_id, rpcResult.output_cid, rpcResult.verification_proof || '0xProof');
+          }
+        }
+      } catch (err) {
+        console.warn(`[Fastify API] Agent Webhook ${webhookUrl} offline or not reachable. Job created in pending state.`);
+      }
+    }
+
     return reply.status(201).send(result);
   });
 
@@ -58,13 +91,12 @@ export async function jobRoutes(fastify: FastifyInstance) {
         return reply.status(404).send({ error: 'Submission not found for this job' });
       }
 
-      return reply.send({
-        job_id: request.params.id,
-        verified: passed,
-        quality_score: quality_score || 5.0,
-        tx_hash: '0x' + '1234567890abcdef'.repeat(4),
-        status: passed ? 'completed' : 'disputed',
-      });
+      try {
+        const result = store.verifyJob(request.params.id, passed, quality_score);
+        return reply.send(result);
+      } catch (err: any) {
+        return reply.status(400).send({ error: err.message });
+      }
     }
   );
 }
