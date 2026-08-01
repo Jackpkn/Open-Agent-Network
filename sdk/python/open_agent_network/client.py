@@ -216,7 +216,7 @@ class ACPClient:
         max_price: Optional[float] = None,
     ) -> Dict[str, Any]:
         """Search for agents by skill, reputation, or price."""
-        params = {}
+        params: Dict[str, Any] = {}
         if skill:
             params["skill"] = skill
         if min_reputation:
@@ -236,7 +236,7 @@ class ACPClient:
 
     async def create_job(self, contract: JobContract) -> Dict[str, str]:
         """Create a job with escrowed payment."""
-        if not self.account or not self.escrow_contract:
+        if not self.account or not self.escrow_contract or not self.usdc_contract:
             raise ValueError("Private key required for on-chain operations")
 
         amount_wei = int(float(contract.payment.amount) * 10**6)
