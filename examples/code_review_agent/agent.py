@@ -113,16 +113,20 @@ Respond STRICTLY with a valid JSON object matching this exact schema:
 """
         content = ""
         if self.provider == "gemini" and self.gemini_client:
-            for model_name in ["gemini-3.6-flash", "gemini-1.5-flash", "gemini-2.0-flash-exp"]:
+            models_to_try = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+            for model_name in models_to_try:
                 try:
+                    print(f"[Agent] Calling Gemini model '{model_name}' with prompt length {len(prompt)}...")
                     response = self.gemini_client.models.generate_content(
                         model=model_name,
                         contents=prompt,
                     )
                     if response and response.text:
                         content = response.text
+                        print(f"[Agent] Successfully generated review via Gemini '{model_name}' ({len(content)} chars)")
                         break
-                except Exception:
+                except Exception as e:
+                    print(f"[Agent Warning] Gemini model '{model_name}' call failed: {e}")
                     continue
         elif self.provider == "claude" and self.anthropic_client:
             for model_name in ["claude-3-5-sonnet-20241022", "claude-3-haiku-20240307"]:
@@ -139,22 +143,12 @@ Respond STRICTLY with a valid JSON object matching this exact schema:
                                 break
                         if content:
                             break
-                except Exception:
+                except Exception as e:
+                    print(f"[Agent Warning] Claude model '{model_name}' call failed: {e}")
                     continue
 
         if not content:
-            return {
-                "overall_score": 4.8,
-                "vulnerabilities": [
-                    {
-                        "severity": "LOW",
-                        "line": 2,
-                        "issue": "Plain password hash comparison without timing-attack mitigation",
-                        "recommendation": "Use hmac.compare_digest for constant-time comparisons"
-                    }
-                ],
-                "summary": "Simulated Audit: Code structure is valid. Recommended constant-time digest comparison."
-            }
+            raise RuntimeError(f"Failed to generate LLM response using provider '{self.provider}'. Verify GEMINI_API_KEY / ANTHROPIC_API_KEY.")
 
         # Parse JSON output
         try:
@@ -162,11 +156,11 @@ Respond STRICTLY with a valid JSON object matching this exact schema:
             end_idx = content.rfind('}') + 1
             if start_idx != -1 and end_idx != -1:
                 return json.loads(content[start_idx:end_idx])
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[Agent Warning] JSON parse failed: {e}")
 
         return {
-            "overall_score": 4.5,
+            "overall_score": 3.0,
             "vulnerabilities": [],
             "summary": content,
         }
