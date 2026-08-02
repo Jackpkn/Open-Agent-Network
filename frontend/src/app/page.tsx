@@ -877,9 +877,17 @@ export default function Home() {
                 </div>
 
                 {realLlmOutput && (
-                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-left space-y-1">
-                    <p className="text-[11px] font-bold text-blue-400 uppercase font-sans">Accumulated LLM Stream Result:</p>
-                    <pre className="text-[11px] text-slate-300 font-mono overflow-x-auto whitespace-pre-wrap max-h-32">
+                  <div className="p-4 rounded-xl bg-slate-900/90 border border-blue-500/30 text-left space-y-2 shadow-inner">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Live Gemini 3.6 Flash Streamed Output:</span>
+                      </p>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-mono animate-pulse">
+                        STREAMING ACTIVE
+                      </span>
+                    </div>
+                    <pre className="text-xs text-emerald-300 font-mono overflow-x-auto whitespace-pre-wrap max-h-64 p-3 rounded-lg bg-[#030712] border border-slate-800">
                       {realLlmOutput}
                     </pre>
                   </div>

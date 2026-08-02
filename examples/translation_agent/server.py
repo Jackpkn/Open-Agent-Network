@@ -110,44 +110,39 @@ class TranslationA2AHandler(BaseHTTPRequestHandler):
 
             translation_res = self.translate_text(prompt)
 
-            events = [
-                {
-                    "event": "TaskStatusUpdateEvent",
-                    "data": {
-                        "taskId": task_id,
-                        "status": "working",
-                        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                        "message": "Initialized Gemini Polyglot Translation Engine..."
-                    }
-                },
-                {
-                    "event": "TaskArtifactUpdateEvent",
-                    "data": {
+            # A2A Standard Task Event Sequence - Real-time Streaming
+            self.wfile.write(f"event: TaskStatusUpdateEvent\ndata: {json.dumps({'taskId': task_id, 'status': 'working', 'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ'), 'message': '⚡ Connected to Gemini Polyglot Translation Engine...'})}\n\n".encode("utf-8"))
+            self.wfile.flush()
+            time.sleep(0.3)
+
+            # Stream translation output in real-time chunks
+            lines = translation_res.split("\n")
+            accumulated_chunk = ""
+            for i, line in enumerate(lines):
+                accumulated_chunk += line + "\n"
+                if i % 2 == 0 or i == len(lines) - 1:
+                    ev_data = {
                         "taskId": task_id,
                         "status": "working",
                         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
                         "artifact": {
                             "name": "Translation Output",
-                            "parts": [{"text": translation_res, "media_type": "text/plain"}]
+                            "parts": [{"text": accumulated_chunk, "media_type": "text/plain"}]
                         }
                     }
-                },
-                {
-                    "event": "TaskStatusUpdateEvent",
-                    "data": {
-                        "taskId": task_id,
-                        "status": "completed",
-                        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                        "message": "Technical translation completed."
-                    }
-                }
-            ]
+                    self.wfile.write(f"event: TaskArtifactUpdateEvent\ndata: {json.dumps(ev_data)}\n\n".encode("utf-8"))
+                    self.wfile.flush()
+                    time.sleep(0.15)
 
-            for ev in events:
-                sse_payload = f"event: {ev['event']}\ndata: {json.dumps(ev['data'])}\n\n"
-                self.wfile.write(sse_payload.encode("utf-8"))
-                self.wfile.flush()
-                time.sleep(0.3)
+            # Final Completion Event
+            final_ev = {
+                "taskId": task_id,
+                "status": "completed",
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "message": "✅ Technical translation completed successfully."
+            }
+            self.wfile.write(f"event: TaskStatusUpdateEvent\ndata: {json.dumps(final_ev)}\n\n".encode("utf-8"))
+            self.wfile.flush()
 
         else:
             self._set_headers(404)
