@@ -788,6 +788,10 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+        </main>
+      )}
+
       {/* Tab 3: Dedicated Live Agent Execution Command Center & Terminal Screen */}
       {activeTab === 'monitor' && (
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
