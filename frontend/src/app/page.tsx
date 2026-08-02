@@ -95,51 +95,53 @@ export default function Home() {
 
   const handleRunMonitorStream = async () => {
     setMonitorIsRunning(true);
-    setMonitorSseLogs([`[00:00] ⚡ Initiating A2A Stream Connection to ${monitorSelectedUrl}...`]);
+    setMonitorSseLogs([`[00:00] ⚡ Connecting to A2A Agent Stream at ${monitorSelectedUrl}...`]);
     setMonitorOutput('');
 
     const promptParam = encodeURIComponent(monitorPrompt || 'Audit code');
     const sseUrl = `${monitorSelectedUrl.replace(/\/$/, '')}/a2a/v1/stream?prompt=${promptParam}`;
 
     try {
-      const eventSource = new EventSource(sseUrl);
+      const res = await fetch(sseUrl);
+      if (!res.ok || !res.body) {
+        throw new Error(`HTTP ${res.status}: Failed to connect to stream`);
+      }
 
-      eventSource.addEventListener('TaskStatusUpdateEvent', (event: MessageEvent) => {
-        try {
-          const data = JSON.parse(event.data);
-          setMonitorSseLogs((prev) => [...prev, `[STATUS] ${data.message || data.status}`]);
-        } catch (e) {}
-      });
+      setMonitorSseLogs((prev) => [...prev, `[00:01] 🟢 Connected! Reading A2A Stream...`]);
 
-      eventSource.addEventListener('TaskArtifactUpdateEvent', (event: MessageEvent) => {
-        try {
-          const data = JSON.parse(event.data);
-          const artifactText = data.artifact?.parts?.[0]?.text;
-          if (artifactText) {
-            setMonitorSseLogs((prev) => [...prev, `[ARTIFACT] ${data.artifact.name}: Received Output Chunk`]);
-            setMonitorOutput(artifactText);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const jsonStr = line.replace(/^data:\s*/, '').trim();
+                if (jsonStr) {
+                  const data = JSON.parse(jsonStr);
+                  if (data.message) {
+                    setMonitorSseLogs((prev) => [...prev, `[STATUS] ${data.message}`]);
+                  }
+                  const artifactText = data.artifact?.parts?.[0]?.text;
+                  if (artifactText) {
+                    setMonitorOutput(artifactText);
+                  }
+                }
+              } catch (e) {}
+            }
           }
-        } catch (e) {}
-      });
+        }
+      }
 
-      eventSource.onmessage = (event: MessageEvent) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.message) {
-            setMonitorSseLogs((prev) => [...prev, `[STATUS] ${data.message}`]);
-          }
-          const artifactText = data.artifact?.parts?.[0]?.text;
-          if (artifactText) {
-            setMonitorOutput(artifactText);
-          }
-        } catch (e) {}
-      };
-
-      eventSource.onerror = () => {
-        eventSource.close();
-        setMonitorIsRunning(false);
-        setMonitorSseLogs((prev) => [...prev, '🎉 A2A Stream Execution Complete! Saved to Protocol State.']);
-      };
+      setMonitorIsRunning(false);
+      setMonitorSseLogs((prev) => [...prev, '🎉 A2A Stream Execution Complete! Saved to Protocol State.']);
     } catch (err: any) {
       setMonitorIsRunning(false);
       setMonitorSseLogs((prev) => [...prev, `❌ Stream error: ${err.message}`]);
