@@ -122,6 +122,19 @@ export default function Home() {
         } catch (e) {}
       });
 
+      eventSource.onmessage = (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.message) {
+            setMonitorSseLogs((prev) => [...prev, `[STATUS] ${data.message}`]);
+          }
+          const artifactText = data.artifact?.parts?.[0]?.text;
+          if (artifactText) {
+            setMonitorOutput(artifactText);
+          }
+        } catch (e) {}
+      };
+
       eventSource.onerror = () => {
         eventSource.close();
         setMonitorIsRunning(false);
