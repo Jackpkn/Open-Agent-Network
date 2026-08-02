@@ -12,7 +12,7 @@ import json
 import os
 import time
 import asyncio
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import HTTPServer, ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
 from pathlib import Path
 from dotenv import load_dotenv
@@ -207,7 +207,7 @@ class TranslationA2AHandler(BaseHTTPRequestHandler):
 
 def run_server(port=8002):
     server_address = ("", port)
-    httpd = HTTPServer(server_address, TranslationA2AHandler)
+    httpd = ThreadingHTTPServer(server_address, TranslationA2AHandler)
     print(f"🤖 [A2A Translation Agent] Running on http://0.0.0.0:{port}")
     print(f"📜 Agent Card: http://localhost:{port}/.well-known/agent-card.json")
     print(f"⚡ JSON-RPC: http://localhost:{port}/a2a/v1/rpc")

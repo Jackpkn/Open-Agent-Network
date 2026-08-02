@@ -99,10 +99,14 @@ export default function Home() {
     setMonitorOutput('');
 
     const promptParam = encodeURIComponent(monitorPrompt || 'Audit code');
-    const sseUrl = `${monitorSelectedUrl.replace(/\/$/, '')}/a2a/v1/stream?prompt=${promptParam}`;
+    const proxyUrl = `http://localhost:3001/api/v1/jobs/stream-proxy?agentUrl=${encodeURIComponent(monitorSelectedUrl)}&prompt=${promptParam}`;
+    const directUrl = `${monitorSelectedUrl.replace(/\/$/, '')}/a2a/v1/stream?prompt=${promptParam}`;
 
     try {
-      const res = await fetch(sseUrl);
+      let res = await fetch(proxyUrl).catch(() => null);
+      if (!res || !res.ok || !res.body) {
+        res = await fetch(directUrl);
+      }
       if (!res.ok || !res.body) {
         throw new Error(`HTTP ${res.status}: Failed to connect to stream`);
       }

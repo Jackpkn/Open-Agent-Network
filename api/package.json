@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/src/index.js",
-    "dev": "tsc --watch",
+    "dev": "tsc && node dist/src/index.js",
     "test": "tsc && node --test dist/test/api.test.js"
   },
   "keywords": [

@@ -81,6 +81,47 @@ export async function jobRoutes(fastify: FastifyInstance) {
   });
 
   /**
+   * GET /api/v1/jobs/stream-proxy
+   * Proxy SSE stream directly from agent target URL to browser client
+   */
+  fastify.get<{
+    Querystring: {
+      agentUrl?: string;
+      prompt?: string;
+    };
+  }>('/api/v1/jobs/stream-proxy', async (request, reply) => {
+    const { agentUrl = 'http://localhost:8001', prompt = 'Audit code' } = request.query || {};
+
+    const targetUrl = `${agentUrl.replace(/\/$/, '')}/a2a/v1/stream?prompt=${encodeURIComponent(prompt)}`;
+
+    reply.raw.setHeader('Content-Type', 'text/event-stream');
+    reply.raw.setHeader('Cache-Control', 'no-cache');
+    reply.raw.setHeader('Connection', 'keep-alive');
+    reply.raw.setHeader('Access-Control-Allow-Origin', '*');
+
+    try {
+      const response = await fetch(targetUrl);
+      if (!response.body) {
+        reply.raw.write(`data: ${JSON.stringify({ message: 'Error: No response stream body from agent' })}\n\n`);
+        return reply.raw.end();
+      }
+
+      const reader = (response.body as any).getReader();
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (value) {
+          reply.raw.write(value);
+        }
+      }
+    } catch (err: any) {
+      reply.raw.write(`data: ${JSON.stringify({ message: `Stream proxy error: ${err.message}` })}\n\n`);
+    }
+
+    reply.raw.end();
+  });
+
+  /**
    * GET /api/v1/jobs/:id
    * Get job status and output by ID
    */
