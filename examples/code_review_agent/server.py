@@ -36,9 +36,10 @@ def format_audit_report(review_dict: dict, prompt: str) -> str:
     score = review_dict.get("overall_score", 4.5)
     summary = review_dict.get("summary", "Code review completed.")
     vulns = review_dict.get("vulnerabilities", [])
+    refactored_code = review_dict.get("refactored_code", "")
 
     lines = [
-        f"// 🛡️ REAL GEMINI 3.6 FLASH AUDIT REPORT — SECURITY SCORE: {score}/5.0",
+        f"// 🛡️ REAL GEMINI FLASH AUDIT REPORT — SECURITY SCORE: {score}/5.0",
         f"// ===========================================================================",
         f"// EXECUTIVE SUMMARY: {summary}",
         f"// ===========================================================================",
@@ -55,28 +56,11 @@ def format_audit_report(review_dict: dict, prompt: str) -> str:
             lines.append(f"//   Fix:  {v.get('recommendation')}")
             lines.append("//")
 
-    lines.append("")
-    lines.append("// 🛠️ REFACTORED CODE SOLUTION & REMEDIATION:")
-    lines.append("// ---------------------------------------------------------------------------")
-
-    if "def login" in prompt or "admin" in prompt:
-        lines.append("""import secrets
-
-def login(user: str, pwd: str) -> bool:
-    \"\"\"
-    ✅ SECURITY REMEDIATION:
-    1. Replaced plaintext comparison with secrets.compare_digest to prevent timing attacks.
-    2. Explicit boolean return.
-    \"\"\"
-    USER_DB_HASH = "admin"
-    PASS_DB_HASH = "1234"
-    
-    user_ok = secrets.compare_digest(user, USER_DB_HASH)
-    pwd_ok = secrets.compare_digest(pwd, PASS_DB_HASH)
-    
-    return bool(user_ok and pwd_ok)""")
-    else:
-        lines.append(f"// Refactored payload addressing identified issues:\n// Invariants verified for input prompt.")
+    if refactored_code:
+        lines.append("")
+        lines.append("// 🛠️ REFACTORED CODE SOLUTION & REMEDIATION (DYNAMIC LLM OUTPUT):")
+        lines.append("// ---------------------------------------------------------------------------")
+        lines.append(refactored_code)
 
     return "\n".join(lines)
 

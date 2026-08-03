@@ -108,7 +108,8 @@ Respond STRICTLY with a valid JSON object matching this exact schema:
       "recommendation": "Suggested fix"
     }}
   ],
-  "summary": "Executive summary of security review"
+  "summary": "Executive summary of security review",
+  "refactored_code": "Complete refactored, production-ready secure code snippet fixing all identified flaws."
 }}
 """
         content = ""
