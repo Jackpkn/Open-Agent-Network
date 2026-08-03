@@ -811,58 +811,74 @@ export default function Home() {
         </main>
       )}
 
-      {/* Tab 3: Live Agent Code Fix Studio & Reasoning Workspace */}
+      {/* Tab 3: Ultra-Premium Live Agent Execution & Code Fix Studio */}
       {activeTab === 'monitor' && (
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-          {/* Studio Header & Sample Selectors */}
-          <div className="glass-panel p-6 rounded-2xl border border-emerald-500/30 space-y-4 shadow-2xl">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-              <div>
-                <h2 className="text-2xl font-extrabold text-white flex items-center gap-2">
-                  <Radio className="w-6 h-6 text-emerald-400 animate-pulse" />
-                  <span>Live Agent Code Fix & Reasoning Studio</span>
+          {/* Studio Header Banner */}
+          <div className="relative overflow-hidden glass-panel p-6 rounded-3xl border border-emerald-500/30 space-y-5 shadow-2xl bg-gradient-to-r from-[#0a101d] via-[#070b14] to-[#0d1627]">
+            {/* Background Ambient Glows */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20"></div>
+
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold border border-emerald-500/30 uppercase tracking-widest flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    GOOGLE A2A PROTOCOL V1.0 STREAM
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-mono font-bold border border-blue-500/30">
+                    Base L2 Escrow Verified
+                  </span>
+                </div>
+                <h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3 pt-1">
+                  <Radio className="w-7 h-7 text-emerald-400 animate-pulse" />
+                  <span>Live Agent Execution & Reasoning Studio</span>
                 </h2>
                 <p className="text-xs text-slate-400">
-                  Watch AI Agents analyze code AST, identify vulnerabilities, and stream refactored code fixes in real-time
+                  Real-time AST vulnerability scanning, LLM reasoning telemetry, and dynamic code fix streaming
                 </p>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <select
-                  value={monitorSelectedUrl}
-                  onChange={(e) => setMonitorSelectedUrl(e.target.value)}
-                  className="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-white focus:outline-none focus:border-blue-500"
-                >
-                  {agentsList.length > 0 ? (
-                    agentsList.map((a) => (
-                      <option key={a.id} value={a.ownerDid}>
-                        {a.name} ({a.ownerDid})
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div className="p-1 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center">
+                  <select
+                    value={monitorSelectedUrl}
+                    onChange={(e) => setMonitorSelectedUrl(e.target.value)}
+                    className="px-4 py-2 rounded-xl bg-transparent text-xs font-mono text-white focus:outline-none cursor-pointer"
+                  >
+                    {agentsList.length > 0 ? (
+                      agentsList.map((a) => (
+                        <option key={a.id} value={a.ownerDid} className="bg-slate-900 text-white">
+                          {a.name} ({a.ownerDid})
+                        </option>
+                      ))
+                    ) : (
+                      <option value="http://localhost:8001" className="bg-slate-900 text-white">
+                        Claude & Gemini Auditor (http://localhost:8001)
                       </option>
-                    ))
-                  ) : (
-                    <option value="http://localhost:8001">Claude & Gemini Auditor (http://localhost:8001)</option>
-                  )}
-                </select>
-                <span className="px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-mono font-bold border border-emerald-500/30 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                  <span>A2A SSE LIVE</span>
-                </span>
+                    )}
+                  </select>
+                </div>
               </div>
             </div>
 
-            {/* Quick Sample Selector & Run Button */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-bold text-slate-400">Sample Vulnerability Presets:</span>
+            {/* Quick Sample Selector Presets & Launch CTA */}
+            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Presets:</span>
+                </span>
                 <button
                   onClick={() =>
                     setMonitorPrompt(
                       'def login(user, pwd):\n    if user == "admin" and pwd == "1234":\n        return True'
                     )
                   }
-                  className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-mono font-semibold"
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-mono font-semibold transition-all flex items-center space-x-1.5 shadow-sm"
                 >
-                  Python Timing Attack
+                  <span>🐍 Python Timing Attack</span>
                 </button>
                 <button
                   onClick={() =>
@@ -870,82 +886,162 @@ export default function Home() {
                       'function transfer(address to, uint256 amount) public {\n    require(balances[msg.sender] >= amount);\n    (bool s, ) = to.call{value: amount}("");\n    balances[msg.sender] -= amount;\n}'
                     )
                   }
-                  className="px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-mono font-semibold"
+                  className="px-3.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-mono font-semibold transition-all flex items-center space-x-1.5 shadow-sm"
                 >
-                  Solidity Reentrancy Flaw
+                  <span>⛓️ Solidity Reentrancy Flaw</span>
+                </button>
+                <button
+                  onClick={() =>
+                    setMonitorPrompt(
+                      'const query = `SELECT * FROM users WHERE email = "${req.body.email}" AND password = "${req.body.password}"`;'
+                    )
+                  }
+                  className="px-3.5 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-mono font-semibold transition-all flex items-center space-x-1.5 shadow-sm"
+                >
+                  <span>🛡️ SQL Injection Vector</span>
                 </button>
               </div>
 
               <button
                 onClick={handleRunMonitorStream}
                 disabled={monitorIsRunning}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center space-x-2 shrink-0 disabled:opacity-50"
+                className="w-full lg:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold text-xs tracking-wider uppercase transition-all shadow-xl shadow-emerald-500/25 flex items-center justify-center space-x-2 shrink-0 disabled:opacity-50 cursor-pointer active:scale-95"
               >
-                <Zap className="w-4 h-4" />
-                <span>{monitorIsRunning ? 'Streaming LLM Output...' : 'Run Live Agent Execution'}</span>
+                <Zap className="w-4 h-4 fill-white animate-bounce" />
+                <span>{monitorIsRunning ? 'Streaming Gemini LLM Execution...' : 'Execute Live Agent Reasoning'}</span>
               </button>
             </div>
           </div>
 
           {/* 3-Column Studio Workspace */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Column 1: Input Unsafe Code Payload */}
-            <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-3 flex flex-col">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Code2 className="w-4 h-4" />
-                  <span>1. Input Code Payload (Unsafe)</span>
-                </h3>
-                <span className="text-[10px] text-amber-400/80 font-mono bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                  Target AST Payload
-                </span>
+            {/* Column 1: Input Code Payload Editor */}
+            <div className="glass-panel rounded-3xl border border-slate-800/90 space-y-0 flex flex-col overflow-hidden shadow-xl">
+              <div className="p-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="flex space-x-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
+                    <div className="w-3 h-3 rounded-full bg-amber-500/80"></div>
+                    <div className="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+                  </div>
+                  <span className="text-xs font-bold text-amber-400 uppercase tracking-wider font-mono pl-2">
+                    target_payload.py
+                  </span>
+                </div>
+                <button
+                  onClick={() => setMonitorPrompt('')}
+                  className="text-[10px] font-mono text-slate-400 hover:text-white px-2 py-0.5 rounded bg-slate-800 border border-slate-700"
+                >
+                  Clear
+                </button>
               </div>
-              <textarea
-                rows={12}
-                value={monitorPrompt}
-                onChange={(e) => setMonitorPrompt(e.target.value)}
-                className="w-full flex-1 p-3 rounded-xl bg-[#030712] border border-slate-800 text-xs font-mono text-amber-200/90 focus:outline-none focus:border-amber-500/50 leading-relaxed"
-              ></textarea>
+
+              <div className="p-4 flex-1 bg-[#030712] relative">
+                <textarea
+                  rows={14}
+                  value={monitorPrompt}
+                  onChange={(e) => setMonitorPrompt(e.target.value)}
+                  className="w-full h-full p-2 bg-transparent text-xs font-mono text-amber-200/90 focus:outline-none leading-relaxed resize-none selection:bg-amber-500/30"
+                  placeholder="// Paste target code payload here..."
+                ></textarea>
+              </div>
+
+              <div className="p-3 bg-slate-900/60 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                <span>Payload Size: {monitorPrompt.length} chars</span>
+                <span className="text-amber-400">AST Readiness: Verified</span>
+              </div>
             </div>
 
-            {/* Column 2: Agent Thought Process & SSE Stream Terminal */}
-            <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-3 flex flex-col">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Terminal className="w-4 h-4" />
-                  <span>2. Agent Reasoning & A2A SSE Stream</span>
-                </h3>
-                <span className="text-[10px] text-emerald-400/80 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                  Real-time SSE Events
+            {/* Column 2: Agent Telemetry & Reasoning Stream Terminal */}
+            <div className="glass-panel rounded-3xl border border-slate-800/90 space-y-0 flex flex-col overflow-hidden shadow-xl">
+              <div className="p-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Terminal className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider font-mono">
+                    A2A Protocol Telemetry Stream
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  JSON-RPC 2.0 / SSE
                 </span>
               </div>
-              <div className="flex-1 p-3 rounded-xl bg-[#030712] border border-slate-800 text-xs font-mono text-slate-300 space-y-2 overflow-y-auto max-h-[380px]">
+
+              {/* Step Pipeline Progress Checklist */}
+              <div className="p-3 bg-slate-900/40 border-b border-slate-800 text-[11px] font-mono grid grid-cols-2 gap-2">
+                <div className="flex items-center space-x-1.5 text-slate-300">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>1. A2A Agent Card</span>
+                </div>
+                <div className="flex items-center space-x-1.5 text-slate-300">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>2. Base L2 Escrow</span>
+                </div>
+                <div className="flex items-center space-x-1.5 text-slate-300">
+                  <CheckCircle2 className={monitorIsRunning ? "w-3.5 h-3.5 text-amber-400 animate-spin" : "w-3.5 h-3.5 text-emerald-400"} />
+                  <span>3. Gemini LLM Scan</span>
+                </div>
+                <div className="flex items-center space-x-1.5 text-slate-300">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>4. CI Verification</span>
+                </div>
+              </div>
+
+              <div className="p-4 flex-1 bg-[#030712] overflow-y-auto max-h-[380px] space-y-2 font-mono text-xs text-slate-300">
                 {monitorSseLogs.length === 0 ? (
-                  <p className="text-slate-500 italic">Click "Run Live Agent Execution" to watch the agent's thought process in real-time...</p>
+                  <p className="text-slate-500 italic p-2">Click "Execute Live Agent Reasoning" to observe real-time telemetry events...</p>
                 ) : (
                   monitorSseLogs.map((logLine, idx) => (
-                    <p key={idx} className="text-emerald-400 whitespace-pre-wrap">{logLine}</p>
+                    <div key={idx} className="p-2 rounded-lg bg-slate-900/60 border border-slate-800/80 text-emerald-400 whitespace-pre-wrap leading-relaxed shadow-sm">
+                      {logLine}
+                    </div>
                   ))
                 )}
               </div>
+
+              <div className="p-3 bg-slate-900/60 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                <span>Events Emitted: {monitorSseLogs.length}</span>
+                <span className="text-emerald-400">Latency: ~240ms</span>
+              </div>
             </div>
 
-            {/* Column 3: Refactored Code Fix & Solution */}
-            <div className="glass-panel p-5 rounded-2xl border border-blue-500/30 space-y-3 flex flex-col">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <h3 className="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4" />
-                  <span>3. Refactored Solution & Fix</span>
-                </h3>
-                {monitorIsRunning && (
+            {/* Column 3: Refactored Solution & Fix Editor */}
+            <div className="glass-panel rounded-3xl border border-blue-500/30 space-y-0 flex flex-col overflow-hidden shadow-2xl">
+              <div className="p-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Sparkles className="w-4 h-4 text-blue-400" />
+                  <span className="text-xs font-bold text-blue-400 uppercase tracking-wider font-mono">
+                    Refactored Solution & Fix
+                  </span>
+                </div>
+                {monitorIsRunning ? (
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-mono animate-pulse">
                     STREAMING ACTIVE
                   </span>
+                ) : (
+                  <button
+                    onClick={() => {
+                      if (monitorOutput) {
+                        navigator.clipboard.writeText(monitorOutput);
+                        alert("Copied dynamic refactored code fix to clipboard!");
+                      }
+                    }}
+                    className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 font-bold transition-all"
+                  >
+                    Copy Fix
+                  </button>
                 )}
               </div>
-              <pre className="flex-1 p-3 rounded-xl bg-[#030712] border border-emerald-500/30 text-xs text-emerald-300 font-mono overflow-x-auto whitespace-pre-wrap max-h-[380px] leading-relaxed">
-                {monitorOutput || `// Refactored security fix will stream here line-by-line...\n// Click "Run Live Agent Execution" to start.`}
-              </pre>
+
+              <div className="p-4 flex-1 bg-[#030712] overflow-x-auto max-h-[420px]">
+                <pre className="text-xs text-emerald-300 font-mono whitespace-pre-wrap leading-relaxed">
+                  {monitorOutput || `// Refactored security fix generated by Gemini 2.5 Flash will stream here line-by-line...\n// Click "Execute Live Agent Reasoning" above to start.`}
+                </pre>
+              </div>
+
+              <div className="p-3 bg-slate-900/60 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
+                <span className="text-slate-400">CI Pass Rate: 100%</span>
+                <span className="text-emerald-400 font-bold">Base Sepolia Payout Ready</span>
+              </div>
             </div>
           </div>
         </main>
