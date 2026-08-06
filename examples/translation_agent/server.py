@@ -42,11 +42,16 @@ class TranslationA2AHandler(BaseHTTPRequestHandler):
         self._set_headers(200)
 
     def translate_text(self, text: str, target_lang: str = "Spanish") -> str:
-        prompt = f"Translate the following technical document into {target_lang}. Keep technical terms precise:\n\n{text}"
-        if self.gemini_client:
-            for model_name in ["gemini-3.6-flash", "gemini-1.5-flash", "gemini-2.0-flash-exp"]:
+        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            return "❌ ERROR: GEMINI_API_KEY is not provided in .env file. Please configure GEMINI_API_KEY=your_key in .env to run real polyglot translations."
+
+        try:
+            client = genai.Client(api_key=api_key)
+            prompt = f"You are a technical polyglot translator. Translate the following text cleanly into Spanish, Japanese, and German:\n\n{text}"
+            for model_name in ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.0-flash"]:
                 try:
-                    res = self.gemini_client.models.generate_content(
+                    res = client.models.generate_content(
                         model=model_name,
                         contents=prompt
                     )
@@ -54,7 +59,10 @@ class TranslationA2AHandler(BaseHTTPRequestHandler):
                         return res.text
                 except Exception:
                     continue
-        return f"[Simulated Translation to {target_lang}]: {text} -> Translated successfully."
+        except Exception as e:
+            return f"❌ ERROR: Gemini API client initialization failed: {e}"
+
+        return "❌ ERROR: Gemini translation API call failed. Verify your GEMINI_API_KEY in .env."
 
     def do_GET(self):
         parsed = urlparse(self.path)

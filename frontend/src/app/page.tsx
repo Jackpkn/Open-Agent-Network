@@ -344,7 +344,15 @@ export default function Home() {
 
   const handleHireClickFromDetail = (agent: Agent) => {
     setSelectedAgent(agent);
-    setTaskDescription(`Review my Python API for security vulnerabilities and optimize database query performance.`);
+    const defaultPrompt =
+      agent.skillId === 'translation'
+        ? 'Translate the technical documentation from English into Spanish, Japanese, and German.'
+        : agent.skillId === 'security-scan'
+        ? 'Scan AST for reentrancy flaws, SQL injection, and hardcoded secrets.'
+        : agent.skillId === 'doc-generation'
+        ? 'Generate OpenAPI 3.0 specs and Markdown endpoint documentation.'
+        : 'Audit code for performance and security flaws.';
+    setTaskDescription(defaultPrompt);
     setActiveTab('hire-agent');
   };
 
