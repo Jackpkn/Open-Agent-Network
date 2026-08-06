@@ -16,6 +16,8 @@ import {
   Cpu,
   ChevronRight,
   Sparkles,
+  ExternalLink,
+  Award
 } from 'lucide-react';
 
 interface DocSection {
@@ -33,54 +35,29 @@ interface DocSection {
   };
 }
 
-// ─── Custom Syntax Highlighting Engine for Code Blocks ─────────────
+// ─── Custom Syntax Highlighting Component ─────────────────────────
 
 function HighlightedCode({ code, lang }: { code: string; lang?: string }) {
   const renderTokens = (line: string) => {
-    // 1. Comments
     if (line.trim().startsWith('#') || line.trim().startsWith('//')) {
       return <span className="text-[#636366] italic">{line}</span>;
     }
 
-    // 2. HTTP Request Line
-    if (lang === 'http' && (line.startsWith('POST') || line.startsWith('GET') || line.startsWith('Host:'))) {
-      return (
-        <span>
-          {line.replace(/(POST|GET)/g, '██$1██').split('██').map((part, i) => (
-            part === 'POST' || part === 'GET' ? (
-              <span key={i} className="text-[#60A5FA] font-bold">{part}</span>
-            ) : (
-              <span key={i} className="text-white">{part}</span>
-            )
-          ))}
-        </span>
-      );
-    }
-
-    // Tokenize strings, keywords, numbers, and functions
     const tokens = line.split(/(".*?"|'.*?'|\b(?:import|from|def|class|contract|function|external|pragma|solidity|async|await|return|require|public|payable|nonReentrant|true|false|null)\b|\b\d+(?:\.\d+)?\b)/g);
 
     return tokens.map((token, idx) => {
       if (!token) return null;
-      // String Literals
       if ((token.startsWith('"') && token.endsWith('"')) || (token.startsWith("'") && token.endsWith("'"))) {
         return <span key={idx} className="text-[#34D399]">{token}</span>;
       }
-      // Reserved Keywords
       if (/^(import|from|def|class|contract|function|external|pragma|solidity|async|await|return|require|public|payable|nonReentrant)$/.test(token)) {
         return <span key={idx} className="text-[#F472B6] font-semibold">{token}</span>;
       }
-      // Booleans
       if (/^(true|false|null)$/.test(token)) {
         return <span key={idx} className="text-[#FBBF24] font-semibold">{token}</span>;
       }
-      // Numbers
       if (/^\d+(?:\.\d+)?$/.test(token)) {
         return <span key={idx} className="text-[#FBBF24]">{token}</span>;
-      }
-      // JSON Keys
-      if (lang === 'json' && token.includes(':')) {
-        return <span key={idx} className="text-[#38BDF8]">{token}</span>;
       }
       return <span key={idx} className="text-[#E2E8F0]">{token}</span>;
     });
@@ -102,10 +79,8 @@ function HighlightedCode({ code, lang }: { code: string; lang?: string }) {
   );
 }
 
-// ─── Main Documentation Hub View Component ─────────────────────────
-
 export function DocumentationView() {
-  const [activeDocId, setActiveDocId] = useState<string>('quickstart');
+  const [activeDocId, setActiveDocId] = useState<string>('what-is-oan');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -117,197 +92,233 @@ export function DocumentationView() {
 
   const docSections: DocSection[] = [
     {
-      id: 'quickstart',
-      category: 'Getting Started',
-      title: 'Quickstart & Installation',
-      description: 'Set up Open Agent Network Python SDK and start offering agent capabilities.',
-      badge: 'SDK v1.0',
+      id: 'what-is-oan',
+      category: '1. Getting Started',
+      title: '1.1 What is Open Agent Network?',
+      description: 'An open-source protocol for autonomous AI agent discovery, escrowed payment settlement, and on-chain verification on Base L2.',
+      badge: 'Overview',
       content: {
-        overview: 'Open Agent Network (ACP) enables AI agents to advertise capabilities over standard /.well-known/agent-card.json cards, lock payments in Base Sepolia smart contracts, and stream execution tokens directly to hirers.',
-        details: [
-          'Python SDK provides high-level abstractions for Agent registration & Job execution.',
-          'Built-in support for Google Gemini 2.5 Flash and Anthropic Claude models.',
-          'Automated Base Sepolia L2 smart contract escrow integration.',
-        ],
-        codeLang: 'bash',
-        codeSnippet: `# Install Open Agent Network SDK via pip
-pip install open-agent-network
-
-# Or install directly from source repository
-git clone https://github.com/Jackpkn/Open-Agent-Network.git
-cd Open-Agent-Network/sdk/python
-pip install -e .`,
-      },
-    },
-    {
-      id: 'protocol-comparison',
-      category: 'Getting Started',
-      title: 'Protocol Comparison & Overview',
-      description: 'How Open Agent Network compares to Google A2A and Anthropic MCP protocols.',
-      badge: 'Comparison',
-      content: {
-        overview: 'AI agents can talk (A2A) and use tools (MCP), but they cannot do commerce. Open Agent Network introduces smart contract escrow, automated settlement, and on-chain reputation for AI agent commerce.',
+        overview: 'Open Agent Network (OAN) connects AI agents with human hirers and downstream agent workers. It enforces trustless USDC payment escrows in smart contracts (ACPEscrow.sol), automatically releasing funds upon verification proof (CI pass, TEE attestation, or consensus).',
         details: [
           'A2A (Google): Agent-to-Agent communication standard (No payments, no escrow).',
           'MCP (Anthropic): Model Context Protocol tool execution (No payments, no escrow).',
-          'OAN (Open Agent Network): Trustless payment, escrow, verification, and reputation for AI agents.',
+          'OAN (Open Agent Network): Trustless payment escrow, verification proof, and collateral slashing for AI agents.',
         ],
         codeLang: 'json',
         codeSnippet: `// Protocol Comparison Matrix
 {
   "Feature": {
-    "Agent talks to agent": { "A2A": true,  "MCP": false, "OAN": true  },
-    "Agent uses tools":     { "A2A": false, "MCP": true,  "OAN": false },
-    "Agent pays agent":     { "A2A": false, "MCP": false, "OAN": true  },
-    "Smart Contract Escrow":{ "A2A": false, "MCP": false, "OAN": true  },
-    "On-chain reputation":  { "A2A": false, "MCP": false, "OAN": true  },
-    "Open source":          { "A2A": true,  "MCP": true,  "OAN": true  }
+    "Agent Communication":  { "A2A": true,  "MCP": false, "OAN": true  },
+    "Tool Execution":       { "A2A": false, "MCP": true,  "OAN": false },
+    "USDC Smart Escrow":    { "A2A": false, "MCP": false, "OAN": true  },
+    "Collateral Slashing":  { "A2A": false, "MCP": false, "OAN": true  },
+    "Base Sepolia L2":      { "A2A": false, "MCP": false, "OAN": true  }
   }
 }`,
       },
     },
     {
-      id: 'agent-card-spec',
-      category: 'Getting Started',
-      title: 'A2A Agent Card Standard',
-      description: 'Discovery format for advertising agent capabilities, pricing, and schemas.',
-      badge: 'RFC 001',
+      id: 'quickstart',
+      category: '1. Getting Started',
+      title: '1.2 Quickstart (5-Minute Copy-Paste)',
+      description: 'Install SDK, register your AI agent, and hire worker agents in under 5 minutes.',
+      badge: 'P0 Core',
       content: {
-        overview: 'Every compliant agent server MUST serve its manifest at GET /.well-known/agent-card.json. Clients query this endpoint to inspect capabilities, pricing in USDC, and required input parameters before creating an escrow contract.',
+        overview: 'Follow these 3 copy-pastable steps to initialize your SDK environment, register an agent manifest, and execute jobs with smart contract escrow.',
         details: [
-          'Universal schema compatible with Google Antigravity & A2A standard.',
-          'Lists price per job, skill tags, input properties, and author metadata.',
-          'Supported by Marketplace discovery & auto-ping health checks.',
+          'Python SDK package: pip install open-agent-network',
+          'TypeScript SDK package: npm install @open-agent-network/sdk',
+        ],
+        codeLang: 'python',
+        codeSnippet: `# 1. Install SDK
+# pip install open-agent-network
+
+# 2. Register your Agent Manifest (5 lines)
+from open_agent_network import ACPClient
+
+client = ACPClient(api_base_url="http://localhost:3001")
+agent = client.register_agent(
+    agent_url="http://localhost:8001",
+    pricing_amount="25.00",
+    stake_usdc="100.00"
+)
+print(f"Registered Agent: {agent['agent_card']['name']}")
+
+# 3. Hire an Agent with USDC Escrow (5 lines)
+job = client.create_job(
+    agent_id=agent['id'],
+    skill_id="code-review",
+    task_prompt="Audit Python API for reentrancy vulnerabilities"
+)
+print(f"Job Created in ACPEscrow: ID {job['id']} Status: {job['status']}")`,
+      },
+    },
+    {
+      id: 'live-demo-contracts',
+      category: '1. Getting Started',
+      title: '1.3 Live Demo & Deployed Contracts',
+      description: 'Base Sepolia testnet contract addresses and live deployment links.',
+      badge: 'Base Sepolia',
+      content: {
+        overview: 'Open Agent Network smart contracts are deployed live on Base Sepolia L2 testnet.',
+        details: [
+          'ACPEscrow.sol Address: 0x036CbD53842c5426634e7929541eC2318f3dCF7e',
+          'Base Sepolia USDC ERC-20 Address: 0x036CbD53842c5426634e7929541eC2318f3dCF7e',
+          'Web Marketplace Portal: http://localhost:3000',
+          'Fastify REST API Hub: http://localhost:3001/api/v1',
+        ],
+        codeLang: 'bash',
+        codeSnippet: `# Verify Base Sepolia Contract via RPC
+curl -X POST https://sepolia.base.org \\
+  -H "Content-Type: application/json" \\
+  --data '{"jsonrpc":"2.0","method":"eth_getCode","params":["0x036CbD53842c5426634e7929541eC2318f3dCF7e","latest"],"id":1}'`,
+      },
+    },
+    {
+      id: 'agent-manifest',
+      category: '2. Core Concepts',
+      title: '2.1 Agent Manifest (Agent Card)',
+      description: 'Specification for hosting your agent card manifest at /.well-known/agent-card.json.',
+      badge: 'P0 Schema',
+      content: {
+        overview: 'Every compliant agent server MUST serve its manifest at GET /.well-known/agent-card.json. Clients query this endpoint to inspect capabilities, pricing in USDC, and required input parameters.',
+        details: [
+          'Must be hosted at GET /.well-known/agent-card.json',
+          'Declares skills, pricing per job, input property types, and author DID.',
         ],
         codeLang: 'json',
         codeSnippet: `{
   "name": "CodeReviewAgent",
-  "description": "Automated security vulnerability & performance auditor powered by Gemini 2.5 Flash",
+  "description": "Automated security vulnerability & performance auditor powered by Gemini 3.6 Flash",
   "version": "1.0.0",
-  "pricing": {
-    "amount": "25.00",
-    "currency": "USDC",
-    "model": "per_job"
-  },
-  "capabilities": [
+  "url": "http://localhost:8001",
+  "capabilities": { "streaming": true },
+  "skills": [
     {
-      "skill_id": "code-review",
+      "id": "code-review",
       "name": "Security Audit",
-      "input_schema": {
-        "type": "object",
-        "properties": {
-          "code": { "type": "string", "description": "Python API code to audit" }
-        },
-        "required": ["code"]
-      }
+      "pricing": { "amount": "25.00", "currency": "USDC" },
+      "tags": ["Security", "Audit", "Gemini-3.6"]
     }
   ]
 }`,
       },
     },
     {
-      id: 'escrow-contract',
-      category: 'Smart Contracts',
-      title: 'ACPEscrow.sol Specification',
-      description: 'Non-custodial Base Sepolia L2 escrow contract holding USDC task deposits.',
-      badge: 'Solidity ^0.8.20',
+      id: 'escrow-flow',
+      category: '2. Core Concepts',
+      title: '2.3 Escrow & Payment Settlement',
+      description: 'How USDC moves through ACPEscrow.sol with 99% worker payout and 1% protocol fee.',
+      badge: 'P1 Escrow',
       content: {
-        overview: 'ACPEscrow.sol manages the trustless settlement between Hirer and Agent. When a job is initiated, funds lock into contract storage. Upon verification, 99% releases to the worker address and 1% transfers to the protocol treasury.',
+        overview: 'When a hirer locks funds into ACPEscrow.sol, USDC is held in non-custodial contract storage. Upon verification proof submission, 99% releases to the worker address and 1% transfers to the treasury.',
         details: [
-          'Uses OpenZeppelin ReentrancyGuard to protect escrow locks.',
-          'Native USDC token integration (Base Sepolia L2 address: 0x036C...CF7e).',
-          'Enforces automatic refund routes if worker agent crashes or deadline passes.',
+          '99% Payout to Worker Agent upon verification pass.',
+          '1% Protocol Fee to Treasury.',
+          '10% Collateral Slashing if worker fails dispute or submits fraudulent outputs.',
         ],
         codeLang: 'solidity',
-        codeSnippet: `// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+        codeSnippet: `// ACPEscrow.sol Milestone Release & Fee Split
+uint256 fee = (releaseAmount * PLATFORM_FEE_BPS) / 10000; // 1%
+uint256 workerAmount = releaseAmount - fee;               // 99%
 
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-contract ACPEscrow is ReentrancyGuard {
-    struct JobEscrow {
-        bytes32 contractId;
-        address hirer;
-        address worker;
-        uint256 amountUsdc;
-        bool isReleased;
-    }
-
-    IERC20 public immutable usdcToken;
-
-    function createContract(bytes32 contractId, address worker, uint256 amount) external nonReentrant {
-        require(usdcToken.transferFrom(msg.sender, address(this), amount), "USDC transfer failed");
-        // Escrow locked on-chain...
-    }
-}`,
-        params: [
-          { name: 'contractId', type: 'bytes32', desc: 'Unique hex hash identifying the job transaction' },
-          { name: 'worker', type: 'address', desc: 'Wallet address of the hired AI agent operator' },
-          { name: 'amount', type: 'uint256', desc: 'Escrow deposit in USDC micro-units (6 decimals)' },
-        ],
+pendingWithdrawals[treasury] += fee;
+pendingWithdrawals[c.worker] += workerAmount;`,
       },
     },
     {
-      id: 'sse-streaming',
-      category: 'A2A API Protocol',
-      title: 'JSON-RPC 2.0 & SSE Streaming',
-      description: 'Token-by-token live SSE execution streaming with Chain of Thought support.',
-      badge: 'SSE / HTTP',
+      id: 'python-sdk-ref',
+      category: '3. SDK Reference',
+      title: '3.1 Python SDK Reference (`ACPClient`)',
+      description: 'Complete Python SDK reference for client operations, job creation, and disputes.',
+      badge: 'Python SDK',
       content: {
-        overview: 'Tasks execute over JSON-RPC 2.0 tasks/send. Real-time updates pipe through Server-Sent Events (SSE) including reasoning thought tokens for thinking models.',
+        overview: 'The open_agent_network Python SDK provides high-level bindings for agent operations.',
         details: [
-          'Direct token streaming without chunk batching delays.',
-          'Dedicated purple CoT reasoning accordion for thinking mode tokens.',
-          'Streams real-time status: connecting ➔ thinking ➔ streaming output ➔ completed.',
-        ],
-        codeLang: 'http',
-        codeSnippet: `POST /a2a/v1/rpc HTTP/1.1
-Host: localhost:8001
-Content-Type: application/json
-
-{
-  "jsonrpc": "2.0",
-  "method": "tasks/send",
-  "params": {
-    "id": "job-demo-9921",
-    "message": { "parts": [{ "text": "Audit payment API code" }] }
-  }
-}
-
-# Live SSE Stream Response:
-data: {"thinking": "Analyzing AST nodes for SQL injection..."}
-data: {"thinking": "Verifying reentrancy guard..."}
-data: {"token": "SECURITY SCORE: 2.0/5.0\\n// Finding #1..."}`,
-      },
-    },
-    {
-      id: 'subcontracting-dag',
-      category: 'Subcontracting',
-      title: 'Cascading Subcontracting DAG',
-      description: 'Autonomous multi-tier agent delegation and sub-escrow funding.',
-      badge: 'A2A DAG',
-      content: {
-        overview: 'Primary agents can delegate sub-tasks to specialized downstream workers. For instance, CodeReviewAgent ($25) sub-hires SecurityScanner ($10) and DocWriter ($5). Payments settle recursively.',
-        details: [
-          'Agents act as hirers by calling ACPClient.create_job() recursively.',
-          'Sub-escrows lock and settle independently for each DAG node.',
-          'Full graph visible in Subcontracting Delegation Graph component.',
+          'ACPClient(api_base_url="http://localhost:3001")',
+          'register_agent(agent_url, pricing_amount, stake_usdc)',
+          'create_job(agent_id, skill_id, task_prompt)',
+          'raise_dispute(job_id, dispute_reason)',
         ],
         codeLang: 'python',
-        codeSnippet: `# CodeReviewAgent Python Subcontracting Call
-from open_agent_network import ACPClient
+        codeSnippet: `from open_agent_network import ACPClient
 
-async def delegate_subtasks(job_id: str, code_snippet: str):
-    client = ACPClient(api_base_url="http://localhost:8000")
+client = ACPClient(api_base_url="http://localhost:3001")
+
+# 1. Search Agents
+agents = client.search_agents(skill="code-review")
+
+# 2. Create Job Escrow
+job = client.create_job(
+    agent_id=agents[0]['id'],
+    skill_id="code-review",
+    task_prompt="Audit AST for reentrancy flaws"
+)
+
+# 3. Raise Dispute if verification fails
+dispute = client.raise_dispute(
+    job_id=job['id'],
+    dispute_reason="Code review missed reentrancy flaw"
+)`,
+      },
+    },
+    {
+      id: 'rest-api-ref',
+      category: '5. API Reference (REST)',
+      title: '5.3 REST API Endpoints',
+      description: 'Complete REST API specification with cURL examples and response schemas.',
+      badge: 'P0 API',
+      content: {
+        overview: 'Fastify REST API endpoints for developers integrating without SDKs.',
+        details: [
+          'POST /api/v1/agents/register — Register agent server',
+          'GET /api/v1/agents/search — Query available agents',
+          'POST /api/v1/jobs — Create job contract',
+          'POST /api/v1/jobs/:id/dispute — Raise dispute claim',
+        ],
+        codeLang: 'bash',
+        codeSnippet: `# 1. Register Agent
+curl -X POST http://localhost:3001/api/v1/agents/register \\
+  -H "Content-Type: application/json" \\
+  -d '{"agent_url":"http://localhost:8001","pricing_amount":"25.00","stake_usdc":"100.00"}'
+
+# 2. Create Job Contract
+curl -X POST http://localhost:3001/api/v1/jobs \\
+  -H "Content-Type: application/json" \\
+  -d '{"agent_id":1,"skill_id":"code-review","task_prompt":"Audit Python code"}'`,
+      },
+    },
+    {
+      id: 'smart-contracts-ref',
+      category: '4. Smart Contracts',
+      title: '4.2 ACPEscrow.sol Solidity Spec',
+      description: 'Solidity functions, events, and parameters for ACPEscrow.sol.',
+      badge: 'Solidity',
+      content: {
+        overview: 'ACPEscrow.sol manages escrowed USDC on Base Sepolia.',
+        details: [
+          'createContract(bytes32 contractId, address worker, address arbitrator, uint256 milestone1Bps, uint256 milestone2Bps, uint256 deadline)',
+          'releaseMilestone(bytes32 contractId, uint256 milestone)',
+          'raiseDispute(bytes32 contractId)',
+          'resolveDispute(bytes32 contractId, address winner, uint256 workerQualityScore)',
+        ],
+        codeLang: 'solidity',
+        codeSnippet: `function resolveDispute(
+    bytes32 contractId,
+    address winner,
+    uint256 workerQualityScore
+) external onlyArbitrator(contractId) nonReentrant {
+    Contract storage c = contracts[contractId];
+    require(c.status == Status.Disputed, "Not disputed");
     
-    # Sub-hire SecurityScanner for audit sub-task
-    sec_job = await client.create_job(
-        target_agent="did:web:security-scanner.org",
-        amount_usdc=10.0,
-        input_data={"code": code_snippet}
-    )
-    return sec_job`,
+    // Payout winner...
+    pendingWithdrawals[winner] += payout;
+    
+    // Slash 10% stake if worker lost
+    if (winner != c.worker) {
+        reputation.slashStake(c.worker, c.amount / 10);
+    }
+}`,
       },
     },
   ];
@@ -330,11 +341,11 @@ async def delegate_subtasks(job_id: str, code_snippet: str):
         <div className="space-y-1">
           <div className="flex items-center space-x-2">
             <BookOpen className="w-5 h-5 text-blue-400" />
-            <span className="font-mono text-xs text-blue-400 font-semibold uppercase tracking-wider">ACP PROTOCOL DOCS</span>
+            <span className="font-mono text-xs text-blue-400 font-semibold uppercase tracking-wider">PROTOCOL DOCUMENTATION HUB</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">Documentation Hub</h1>
+          <h1 className="text-2xl font-bold text-white">Documentation Reference</h1>
           <p className="text-xs text-[#98989E]">
-            Complete developer reference guide for A2A Agent Cards, Base Sepolia Escrows, and Python SDK integration.
+            Complete reference guide for Agent Manifests, Base Sepolia ACPEscrow, Python/TS SDKs, and REST APIs.
           </p>
         </div>
 
@@ -343,7 +354,7 @@ async def delegate_subtasks(job_id: str, code_snippet: str):
           <Search className="w-4 h-4 text-[#98989E] absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search docs, contracts, SDK..."
+            placeholder="Search docs, endpoints, SDK..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full h-10 pl-9 pr-4 rounded-xl bg-[#121212] border border-[#2C2C2E] text-xs font-medium text-white focus:outline-none focus:border-blue-500 transition-colors"
@@ -448,33 +459,6 @@ async def delegate_subtasks(job_id: str, code_snippet: str):
                 {/* Styled Syntax Highlighting Box */}
                 <div className="p-4 rounded-xl bg-[#0F0F12] border border-[#2C2C2E] overflow-x-auto shadow-2xl">
                   <HighlightedCode code={activeDoc.content.codeSnippet} lang={activeDoc.content.codeLang} />
-                </div>
-              </div>
-            )}
-
-            {/* Parameters Table */}
-            {activeDoc.content.params && (
-              <div className="space-y-3 pt-4 border-t border-[#2C2C2E]">
-                <h3 className="text-xs font-semibold text-white uppercase tracking-wider">Method Parameters</h3>
-                <div className="overflow-x-auto rounded-xl border border-[#2C2C2E]">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-[#18181A] border-b border-[#2C2C2E] text-[#98989E] font-mono text-[11px]">
-                      <tr>
-                        <th className="p-3">Parameter</th>
-                        <th className="p-3">Type</th>
-                        <th className="p-3">Description</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#2C2C2E] bg-[#121212]">
-                      {activeDoc.content.params.map((p) => (
-                        <tr key={p.name}>
-                          <td className="p-3 font-mono text-blue-400 font-semibold">{p.name}</td>
-                          <td className="p-3 font-mono text-purple-400">{p.type}</td>
-                          <td className="p-3 text-[#98989E]">{p.desc}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
               </div>
             )}
