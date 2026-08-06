@@ -84,25 +84,38 @@ class SecurityScannerA2AHandler(BaseHTTPRequestHandler):
             send_event({"thinking": "Checking database query interpolations and secret keys..."})
             time.sleep(0.4)
 
-            # Audit Output Payload
-            audit_output = (
-                "// 🛡️ SECURITY SCANNER SUB-TASK REPORT — PRICE: $10.00 USDC\n"
-                "// ===========================================================================\n"
-                "// EXECUTIVE SUMMARY: Scanned AST nodes for reentrancy, injection, and hardcoded secrets.\n"
-                "// ===========================================================================\n\n"
-                "// ⚠️ DETECTED VULNERABILITIES & FINDINGS:\n"
-                "// Issue #1 [CRITICAL]: Line 4\n"
-                "//   Flaw: Direct SQL string interpolation in database query execution.\n"
-                "//   Fix:  Use parameterized queries (e.g. cursor.execute('... WHERE id = %s', (user_id,))).\n"
-                "//\n"
-                "// Issue #2 [HIGH]: Line 12\n"
-                "//   Flaw: Missing ReentrancyGuard on external state-changing transaction function.\n"
-                "//   Fix:  Add OpenZeppelin nonReentrant modifier to prevent reentrant withdrawal calls.\n"
-            )
+            # Real Gemini 3.6 / 3.5 Flash Call
+            api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+            if not api_key:
+                err_msg = "// ❌ ERROR: GEMINI_API_KEY is not provided in .env file.\n// Please configure GEMINI_API_KEY=your_key in your .env file to execute real AI security scans."
+                for char in err_msg:
+                    send_event({"token": char})
+                    time.sleep(0.005)
+                send_event({"status": "FAILED"})
+                return
+
+            try:
+                from google import genai
+                client = genai.Client(api_key=api_key)
+                prompt_text = "Perform static AST security vulnerability scan for reentrancy, injection, and secret keys in the provided code. Provide executive summary, security score out of 5.0, detected vulnerabilities with line numbers, severity, and recommendations."
+                
+                content = ""
+                for model_name in ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.0-flash"]:
+                    try:
+                        res = client.models.generate_content(model=model_name, contents=prompt_text)
+                        if res and res.text:
+                            content = res.text
+                            break
+                    except Exception:
+                        continue
+
+                audit_output = content or "// ❌ ERROR: Gemini API call failed. Verify your GEMINI_API_KEY."
+            except Exception as e:
+                audit_output = f"// ❌ ERROR: Gemini API client initialization failed: {e}"
 
             for char in audit_output:
                 send_event({"token": char})
-                time.sleep(0.005)
+                time.sleep(0.003)
 
             send_event({"status": "COMPLETED"})
             return

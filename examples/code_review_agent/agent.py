@@ -46,8 +46,7 @@ class CodeReviewAgent:
             self.anthropic_client = AsyncAnthropic(api_key=self.anthropic_key)
             print("[Agent] Initialized with Anthropic Claude 3.5 Sonnet Engine 🧠")
         else:
-            self.provider = "simulation"
-            print("[Agent] No API Key detected. Initialized in Simulation Mode 🧪")
+            raise RuntimeError("GEMINI_API_KEY (or ANTHROPIC_API_KEY) is missing or invalid. Please configure your API key in the .env file.")
 
     def get_manifest(self) -> AgentManifest:
         engine_name = "Gemini Flash" if self.provider == "gemini" else ("Claude Sonnet" if self.provider == "claude" else "AI Simulation")

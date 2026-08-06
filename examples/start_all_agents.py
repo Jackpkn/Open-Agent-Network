@@ -35,6 +35,19 @@ def register_agent(agent_url: str, price: str = "25.00", stake: str = "100.00"):
         print(f"  ⚠️ Could not auto-register {agent_url} on API Hub: {e}")
 
 def main():
+    import os
+    from dotenv import load_dotenv
+    load_dotenv(repo_root / ".env")
+
+    key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if not key or key == "your_gemini_api_key_here":
+        print("⚠️ WARNING: GEMINI_API_KEY is missing or unconfigured in .env file!")
+        print("   Please add GEMINI_API_KEY=your_key to /Users/pawankumar/Downloads/Open-Agent-Network/.env")
+        print("--------------------------------------------------")
+    else:
+        print("⚡ GEMINI_API_KEY detected! Live Gemini 3.6 / 3.5 Flash Engine enabled.")
+        print("--------------------------------------------------")
+
     print("🚀 Launching Open Agent Network Live A2A Agent Suite (4 Servers)...")
     print("--------------------------------------------------")
 

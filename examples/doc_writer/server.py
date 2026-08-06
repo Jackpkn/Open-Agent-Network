@@ -84,32 +84,38 @@ class DocWriterA2AHandler(BaseHTTPRequestHandler):
             send_event({"thinking": "Formatting Markdown endpoint documentation..."})
             time.sleep(0.4)
 
-            # Doc Output Payload
-            doc_output = (
-                "# 📝 DOC WRITER SUB-TASK REPORT — PRICE: $5.00 USDC\n"
-                "## API Reference & OpenAPI Specification\n\n"
-                "### Endpoint: `POST /api/v1/user/payment`\n"
-                "- **Description**: Processes user payment transactions\n"
-                "- **Authentication**: Bearer Token / Web3 Wallet Signature\n"
-                "- **Request Body**:\n"
-                "```json\n"
-                "{\n"
-                "  \"user_id\": \"usr_88921\",\n"
-                "  \"amount_cents\": 2500\n"
-                "}\n"
-                "```\n"
-                "- **Response `200 OK`**:\n"
-                "```json\n"
-                "{\n"
-                "  \"status\": \"success\",\n"
-                "  \"transaction_hash\": \"0x892f...a12\"\n"
-                "}\n"
-                "```\n"
-            )
+            # Real Gemini 3.6 / 3.5 Flash Call
+            api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+            if not api_key:
+                err_msg = "# ❌ ERROR: GEMINI_API_KEY is not provided in .env file.\nPlease configure GEMINI_API_KEY=your_key in your .env file to generate real OpenAPI documentation."
+                for char in err_msg:
+                    send_event({"token": char})
+                    time.sleep(0.005)
+                send_event({"status": "FAILED"})
+                return
+
+            try:
+                from google import genai
+                client = genai.Client(api_key=api_key)
+                prompt_text = "Generate comprehensive OpenAPI 3.0 specification and Markdown documentation for payment processing API endpoints."
+                
+                content = ""
+                for model_name in ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.0-flash"]:
+                    try:
+                        res = client.models.generate_content(model=model_name, contents=prompt_text)
+                        if res and res.text:
+                            content = res.text
+                            break
+                    except Exception:
+                        continue
+
+                doc_output = content or "# ❌ ERROR: Gemini API call failed. Verify your GEMINI_API_KEY."
+            except Exception as e:
+                doc_output = f"# ❌ ERROR: Gemini API client initialization failed: {e}"
 
             for char in doc_output:
                 send_event({"token": char})
-                time.sleep(0.005)
+                time.sleep(0.003)
 
             send_event({"status": "COMPLETED"})
             return
