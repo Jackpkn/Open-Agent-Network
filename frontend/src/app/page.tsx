@@ -10,6 +10,7 @@ import { HowItWorksTreeGraph } from '../components/HowItWorksTreeGraph';
 import { ProtocolFlowGraph } from '../components/ProtocolFlowGraph';
 import { DocumentationView } from '../components/DocumentationView';
 import { LiveActivityFeed } from '../components/LiveActivityFeed';
+import { AgentLeaderboard } from '../components/AgentLeaderboard';
 import {
   Bot,
   ShieldCheck,
@@ -210,7 +211,7 @@ export default function Home() {
   const { data: balanceData } = useBalance({ address });
   const { sendTransactionAsync } = useSendTransaction();
 
-  const [activeTab, setActiveTab] = useState<'home' | 'marketplace' | 'agent-detail' | 'hire-agent' | 'dashboard' | 'how-it-works' | 'docs'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'marketplace' | 'agent-detail' | 'hire-agent' | 'dashboard' | 'how-it-works' | 'docs' | 'leaderboard'>('home');
   const [activeJobConsole, setActiveJobConsole] = useState<ActiveJob | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -533,6 +534,12 @@ export default function Home() {
               className={`text-sm transition-colors ${activeTab === 'marketplace' ? 'text-white font-medium' : 'text-[#98989E] hover:text-white'}`}
             >
               Marketplace
+            </button>
+            <button
+              onClick={() => { setActiveTab('leaderboard'); setActiveJobConsole(null); }}
+              className={`text-sm transition-colors ${activeTab === 'leaderboard' ? 'text-white font-medium' : 'text-[#98989E] hover:text-white'}`}
+            >
+              Leaderboard
             </button>
             {currentAgent && (
               <button
@@ -1690,6 +1697,10 @@ export default function Home() {
               </div>
             </div>
           </div>
+        </main>
+      ) : activeTab === 'leaderboard' ? (
+        <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
+          <AgentLeaderboard agents={agentsList} />
         </main>
       ) : activeTab === 'docs' ? (
         <DocumentationView />
