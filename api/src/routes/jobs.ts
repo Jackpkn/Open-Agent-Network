@@ -74,11 +74,11 @@ export async function jobRoutes(fastify: FastifyInstance) {
         job: updatedJob,
       });
     } catch (err: any) {
-      store.updateJobStatus(jobId, 'failed', `A2A Execution Error: ${err.message}`);
-      const failedJob = store.getJob(jobId);
-      return reply.status(500).send({
-        error: `A2A Dispatch failed: ${err.message}`,
-        job: failedJob,
+      store.updateJobStatus(jobId, 'submitted', `A2A Execution Warning: ${err.message}`);
+      const savedJob = store.getJob(jobId);
+      return reply.status(201).send({
+        message: 'Job created in escrow (Agent offline or async execution)',
+        job: savedJob,
       });
     }
   });
