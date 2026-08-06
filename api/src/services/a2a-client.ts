@@ -49,6 +49,18 @@ export class A2AClient {
   }
 
   /**
+   * Checks health status of a remote agent server
+   */
+  async pingHealth(agentUrl: string): Promise<boolean> {
+    try {
+      const card = await this.fetchAgentCard(agentUrl);
+      return !!card.name;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Executes a task on a remote agent via JSON-RPC 2.0 method `tasks/send`
    */
   async sendTask(agentUrl: string, taskId: string, prompt: string): Promise<A2ATaskResponse> {
@@ -87,6 +99,40 @@ export class A2AClient {
     return {
       id: result.id || taskId,
       status: result.status || 'completed',
+      output_text: result.output_text || result.message?.parts?.[0]?.text || '',
+      artifacts: result.artifacts || [],
+    };
+  }
+
+  /**
+   * Queries task status from remote agent via JSON-RPC 2.0 method `tasks/get`
+   */
+  async getTaskStatus(agentUrl: string, taskId: string): Promise<A2ATaskResponse> {
+    const cleanUrl = agentUrl.replace(/\/$/, '');
+    const rpcEndpoint = `${cleanUrl}/a2a/v1/rpc`;
+
+    const body = {
+      jsonrpc: '2.0',
+      method: 'tasks/get',
+      params: { id: taskId },
+      id: 2,
+    };
+
+    const res = await fetch(rpcEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      throw new Error(`A2A tasks/get failed: HTTP status ${res.status}`);
+    }
+
+    const rpcRes: any = await res.json();
+    const result = rpcRes.result || {};
+    return {
+      id: result.id || taskId,
+      status: result.status || 'working',
       output_text: result.output_text || result.message?.parts?.[0]?.text || '',
       artifacts: result.artifacts || [],
     };

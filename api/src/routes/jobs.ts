@@ -6,7 +6,7 @@ import { randomUUID } from 'crypto';
 export async function jobRoutes(fastify: FastifyInstance) {
   /**
    * GET /api/v1/jobs
-   * Get all active and completed jobs from SQLite
+   * Get all active, completed, and disputed jobs from SQLite
    */
   fastify.get('/api/v1/jobs', async (request, reply) => {
     const jobs = store.getAllJobs();
@@ -22,9 +22,10 @@ export async function jobRoutes(fastify: FastifyInstance) {
       agent_id: number;
       skill_id: string;
       task_prompt: string;
+      onchain_tx_hash?: string;
     };
   }>('/api/v1/jobs', async (request, reply) => {
-    const { agent_id, skill_id, task_prompt } = request.body || {};
+    const { agent_id, skill_id, task_prompt, onchain_tx_hash } = request.body || {};
 
     if (!agent_id || !task_prompt) {
       return reply.status(400).send({ error: 'agent_id and task_prompt are required' });
@@ -50,6 +51,8 @@ export async function jobRoutes(fastify: FastifyInstance) {
       result_artifacts: null,
       pricing_amount: agent.pricing_amount || '25.00',
       pricing_currency: agent.pricing_currency || 'USDC',
+      onchain_tx_hash: onchain_tx_hash || null,
+      verification_proof: null,
     });
 
     // 2. Dispatch task to Agent Server over A2A JSON-RPC 2.0 tasks/send
@@ -78,6 +81,108 @@ export async function jobRoutes(fastify: FastifyInstance) {
         job: failedJob,
       });
     }
+  });
+
+  /**
+   * POST /api/v1/jobs/:id/verify
+   * Submit verification proof (CI test pass, TEE attestation, LLM consensus) and release escrow
+   */
+  fastify.post<{
+    Params: { id: string };
+    Body: { verification_proof: string; onchain_tx_hash?: string };
+  }>('/api/v1/jobs/:id/verify', async (request, reply) => {
+    const { id } = request.params;
+    const { verification_proof, onchain_tx_hash } = request.body || {};
+
+    if (!verification_proof) {
+      return reply.status(400).send({ error: 'verification_proof is required' });
+    }
+
+    const job = store.getJob(id);
+    if (!job) {
+      return reply.status(404).send({ error: `Job with ID ${id} not found` });
+    }
+
+    const completedJob = store.verifyAndCompleteJob(id, verification_proof, onchain_tx_hash);
+    return reply.send({
+      message: 'Proof verified! Escrow payment released to agent.',
+      job: completedJob,
+    });
+  });
+
+  /**
+   * POST /api/v1/jobs/:id/dispute
+   * Raise a dispute for unsatisfactory work or deadline failure
+   */
+  fastify.post<{
+    Params: { id: string };
+    Body: { dispute_reason: string };
+  }>('/api/v1/jobs/:id/dispute', async (request, reply) => {
+    const { id } = request.params;
+    const { dispute_reason } = request.body || {};
+
+    if (!dispute_reason) {
+      return reply.status(400).send({ error: 'dispute_reason is required' });
+    }
+
+    const job = store.getJob(id);
+    if (!job) {
+      return reply.status(404).send({ error: `Job with ID ${id} not found` });
+    }
+
+    const disputedJob = store.disputeJob(id, dispute_reason);
+    return reply.send({
+      message: 'Dispute raised. Arbitrator notified.',
+      job: disputedJob,
+    });
+  });
+
+  /**
+   * POST /api/v1/jobs/:id/resolve-dispute
+   * Arbitrator resolves dispute between hirer and worker agent
+   */
+  fastify.post<{
+    Params: { id: string };
+    Body: { winner: 'hirer' | 'worker' };
+  }>('/api/v1/jobs/:id/resolve-dispute', async (request, reply) => {
+    const { id } = request.params;
+    const { winner } = request.body || {};
+
+    if (!winner || (winner !== 'hirer' && winner !== 'worker')) {
+      return reply.status(400).send({ error: "winner must be 'hirer' or 'worker'" });
+    }
+
+    const job = store.getJob(id);
+    if (!job) {
+      return reply.status(404).send({ error: `Job with ID ${id} not found` });
+    }
+
+    const resolvedJob = store.resolveDispute(id, winner);
+    return reply.send({
+      message: `Dispute resolved in favor of ${winner}.`,
+      job: resolvedJob,
+    });
+  });
+
+  /**
+   * POST /api/v1/jobs/:id/cancel
+   * Cancel job due to deadline timeout or agent failure and trigger USDC escrow refund
+   */
+  fastify.post<{ Params: { id: string } }>('/api/v1/jobs/:id/cancel', async (request, reply) => {
+    const { id } = request.params;
+    const job = store.getJob(id);
+
+    if (!job) {
+      return reply.status(404).send({ error: `Job with ID ${id} not found` });
+    }
+
+    store.updateJobStatus(id, 'canceled', 'Canceled due to timeout or agent server crash');
+    const canceledJob = store.getJob(id);
+
+    return reply.send({
+      message: 'Job canceled. Escrow funds refunded to hirer.',
+      job: canceledJob,
+    });
   });
 
   /**

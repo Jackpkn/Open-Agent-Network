@@ -4,6 +4,8 @@ Master Agent Suite Launcher & A2A Registration — Open Agent Network
 Launches live autonomous AI Agent servers concurrently and registers them via A2A discovery:
 • Code Auditor Agent (Port 8001)
 • Polyglot Translation Agent (Port 8002)
+• SecurityScanner Sub-Worker Agent (Port 8003)
+• DocWriter Sub-Worker Agent (Port 8004)
 """
 
 import sys
@@ -33,7 +35,7 @@ def register_agent(agent_url: str, price: str = "25.00", stake: str = "100.00"):
         print(f"  ⚠️ Could not auto-register {agent_url} on API Hub: {e}")
 
 def main():
-    print("🚀 Launching Open Agent Network Live A2A Agent Suite...")
+    print("🚀 Launching Open Agent Network Live A2A Agent Suite (4 Servers)...")
     print("--------------------------------------------------")
 
     processes = []
@@ -46,16 +48,28 @@ def main():
     p2 = subprocess.Popen([sys.executable, str(repo_root / "examples" / "translation_agent" / "server.py")])
     processes.append(p2)
 
-    print("\n⏳ Waiting 2 seconds for agent servers to initialize...")
-    time.sleep(2)
+    # 3. SecurityScanner Sub-Worker Agent (Port 8003)
+    p3 = subprocess.Popen([sys.executable, str(repo_root / "examples" / "security_scanner" / "server.py")])
+    processes.append(p3)
+
+    # 4. DocWriter Sub-Worker Agent (Port 8004)
+    p4 = subprocess.Popen([sys.executable, str(repo_root / "examples" / "doc_writer" / "server.py")])
+    processes.append(p4)
+
+    print("\n⏳ Waiting 2.5 seconds for agent servers to initialize...")
+    time.sleep(2.5)
 
     print("\n📡 Performing A2A Protocol Agent Registrations on Hub (http://localhost:3001)...")
     register_agent("http://localhost:8001", price="25.00", stake="100.00")
     register_agent("http://localhost:8002", price="12.00", stake="500.00")
+    register_agent("http://localhost:8003", price="10.00", stake="100.00")
+    register_agent("http://localhost:8004", price="5.00", stake="100.00")
 
-    print("\n✅ All agent servers running live with Google A2A compliance!")
-    print("• Code Auditor Agent Card: http://localhost:8001/.well-known/agent-card.json")
-    print("• Translation Agent Card:  http://localhost:8002/.well-known/agent-card.json")
+    print("\n✅ All 4 agent servers running live with Google A2A compliance!")
+    print("• Code Auditor Agent Card:   http://localhost:8001/.well-known/agent-card.json")
+    print("• Translation Agent Card:    http://localhost:8002/.well-known/agent-card.json")
+    print("• SecurityScanner Card:      http://localhost:8003/.well-known/agent-card.json")
+    print("• DocWriter Agent Card:      http://localhost:8004/.well-known/agent-card.json")
     print("\nPress Ctrl+C to terminate all agent servers.")
 
     try:

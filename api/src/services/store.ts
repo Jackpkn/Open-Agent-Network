@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ─── Types (A2A-aligned) ───────────────────────────────────────────
+// ─── Types (A2A-aligned + ACP Protocol Extensions) ────────────────
 
 export interface A2AAgentCard {
   name: string;
@@ -37,7 +37,6 @@ export interface RegisteredAgent {
   is_healthy: boolean;
   registered_at: string;
   last_health_check: string | null;
-  // Open Agent Network extensions (pricing, reputation, etc.)
   pricing_amount?: string;
   pricing_currency?: string;
   stake_usdc?: string;
@@ -48,6 +47,7 @@ export type TaskState =
   | 'working'
   | 'input-required'
   | 'completed'
+  | 'disputed'
   | 'failed'
   | 'canceled'
   | 'rejected';
@@ -64,6 +64,10 @@ export interface Job {
   result_artifacts: string | null; // JSON string of artifacts
   pricing_amount: string;
   pricing_currency: string;
+  onchain_tx_hash?: string | null;
+  verification_proof?: string | null;
+  dispute_reason?: string | null;
+  dispute_winner?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -75,7 +79,6 @@ class DataStore {
 
   constructor() {
     const dbPath = path.join(__dirname, '..', '..', 'data', 'oan.sqlite');
-    // Ensure data directory exists
     fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
     this.db = new Database(dbPath);
@@ -110,11 +113,29 @@ class DataStore {
         result_artifacts TEXT,
         pricing_amount TEXT DEFAULT '0.00',
         pricing_currency TEXT DEFAULT 'USDC',
+        onchain_tx_hash TEXT,
+        verification_proof TEXT,
+        dispute_reason TEXT,
+        dispute_winner TEXT,
         created_at TEXT DEFAULT (datetime('now')),
         updated_at TEXT DEFAULT (datetime('now')),
         FOREIGN KEY (agent_id) REFERENCES agents(id)
       );
     `);
+
+    // Ensure columns exist for existing databases
+    try {
+      this.db.exec(`ALTER TABLE jobs ADD COLUMN onchain_tx_hash TEXT;`);
+    } catch (e) {}
+    try {
+      this.db.exec(`ALTER TABLE jobs ADD COLUMN verification_proof TEXT;`);
+    } catch (e) {}
+    try {
+      this.db.exec(`ALTER TABLE jobs ADD COLUMN dispute_reason TEXT;`);
+    } catch (e) {}
+    try {
+      this.db.exec(`ALTER TABLE jobs ADD COLUMN dispute_winner TEXT;`);
+    } catch (e) {}
   }
 
   // ─── Agent Registry ────────────────────────────────────────────
@@ -156,7 +177,7 @@ class DataStore {
 
   getAgentByUrl(url: string): RegisteredAgent | undefined {
     const row = this.db.prepare('SELECT * FROM agents WHERE agent_url = ?').get(url) as any;
-    return row ? this.rowToAgent(row) : undefined;
+    return row ? this.rowToAgent(url) : undefined;
   }
 
   getAllAgents(): RegisteredAgent[] {
@@ -211,8 +232,8 @@ class DataStore {
 
   createJob(job: Omit<Job, 'created_at' | 'updated_at'>): Job {
     const stmt = this.db.prepare(`
-      INSERT INTO jobs (id, agent_id, agent_url, agent_name, skill_id, task_prompt, status, pricing_amount, pricing_currency)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO jobs (id, agent_id, agent_url, agent_name, skill_id, task_prompt, status, pricing_amount, pricing_currency, onchain_tx_hash, verification_proof)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -224,7 +245,9 @@ class DataStore {
       job.task_prompt,
       job.status,
       job.pricing_amount,
-      job.pricing_currency
+      job.pricing_currency,
+      job.onchain_tx_hash || null,
+      job.verification_proof || null
     );
 
     return this.getJob(job.id)!;
@@ -244,6 +267,28 @@ class DataStore {
     this.db.prepare(
       `UPDATE jobs SET status = ?, result_text = COALESCE(?, result_text), result_artifacts = COALESCE(?, result_artifacts), updated_at = datetime('now') WHERE id = ?`
     ).run(status, resultText || null, resultArtifacts || null, id);
+  }
+
+  verifyAndCompleteJob(id: string, verificationProof: string, txHash?: string): Job | undefined {
+    this.db.prepare(
+      `UPDATE jobs SET status = 'completed', verification_proof = ?, onchain_tx_hash = COALESCE(?, onchain_tx_hash), updated_at = datetime('now') WHERE id = ?`
+    ).run(verificationProof, txHash || null, id);
+    return this.getJob(id);
+  }
+
+  disputeJob(id: string, disputeReason: string): Job | undefined {
+    this.db.prepare(
+      `UPDATE jobs SET status = 'disputed', dispute_reason = ?, updated_at = datetime('now') WHERE id = ?`
+    ).run(disputeReason, id);
+    return this.getJob(id);
+  }
+
+  resolveDispute(id: string, winner: 'hirer' | 'worker'): Job | undefined {
+    const nextStatus: TaskState = winner === 'worker' ? 'completed' : 'canceled';
+    this.db.prepare(
+      `UPDATE jobs SET status = ?, dispute_winner = ?, updated_at = datetime('now') WHERE id = ?`
+    ).run(nextStatus, winner, id);
+    return this.getJob(id);
   }
 
   // ─── Private helpers ───────────────────────────────────────────
@@ -275,6 +320,10 @@ class DataStore {
       result_artifacts: row.result_artifacts,
       pricing_amount: row.pricing_amount,
       pricing_currency: row.pricing_currency,
+      onchain_tx_hash: row.onchain_tx_hash,
+      verification_proof: row.verification_proof,
+      dispute_reason: row.dispute_reason,
+      dispute_winner: row.dispute_winner,
       created_at: row.created_at,
       updated_at: row.updated_at,
     };
