@@ -294,10 +294,26 @@ class DataStore {
   // ─── Private helpers ───────────────────────────────────────────
 
   private rowToAgent(row: any): RegisteredAgent {
+    let card: A2AAgentCard = {
+      name: `Agent #${row.id}`,
+      description: 'A2A Agent',
+      url: row.agent_url || '',
+      version: '1.0.0',
+      capabilities: {},
+      skills: [],
+    };
+    if (row.agent_card_json) {
+      try {
+        card = JSON.parse(row.agent_card_json);
+      } catch (e) {
+        console.warn(`JSON.parse warning for agent #${row.id}:`, e);
+      }
+    }
+
     return {
       id: row.id,
       agent_url: row.agent_url,
-      agent_card: JSON.parse(row.agent_card_json),
+      agent_card: card,
       is_healthy: !!row.is_healthy,
       registered_at: row.registered_at,
       last_health_check: row.last_health_check,
