@@ -975,7 +975,7 @@ export default function Home() {
                     <div
                       key={agent.id}
                       onClick={() => handleAgentSelect(agent)}
-                      className="rounded-2xl border border-[#2C2C2E] bg-[#1C1C1E] p-5 transition-all hover:border-[#3E3E42] hover:-translate-y-0.5 cursor-pointer space-y-4"
+                      className="hologram-card animate-scanline rounded-2xl p-5 cursor-pointer space-y-4 transition-all"
                     >
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1E293B] border border-[#3B82F6]/30 text-[17px] font-bold text-[#3B82F6]">

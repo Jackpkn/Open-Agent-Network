@@ -152,22 +152,97 @@ body {
   animation: shimmerGlow 4s linear infinite;
 }
 
-/* Custom Dark Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* ─── Modern Cybernetic & Holographic Animations ──────────────────── */
+
+@keyframes scanLine {
+  0% {
+    top: -100%;
+  }
+  100% {
+    top: 200%;
+  }
 }
 
-::-webkit-scrollbar-track {
-  background: #121212;
+@keyframes borderBeam {
+  0% {
+    offset-distance: 0%;
+  }
+  100% {
+    offset-distance: 100%;
+  }
 }
 
-::-webkit-scrollbar-thumb {
-  background: #2C2C2E;
-  border-radius: 4px;
+@keyframes sonarExpand {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #3E3E42;
+@keyframes pulseGlint {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+.animate-scanline {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-scanline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(180deg, transparent 0%, rgba(59, 130, 246, 0.15) 50%, transparent 100%);
+  animation: scanLine 6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  pointer-events: none;
+}
+
+.sonar-ring {
+  position: relative;
+}
+
+.sonar-ring::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 1px solid rgba(52, 211, 153, 0.6);
+  animation: sonarExpand 2.5s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+  pointer-events: none;
+}
+
+.hologram-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(28, 28, 30, 0.95) 0%, rgba(20, 20, 22, 0.98) 100%);
+  border: 1px solid rgba(44, 44, 46, 0.8);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(16px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hologram-card:hover {
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px);
+}
+
+.hologram-grid-bg {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
