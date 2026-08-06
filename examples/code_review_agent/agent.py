@@ -40,7 +40,7 @@ class CodeReviewAgent:
         if self.gemini_key:
             self.provider = "gemini"
             self.gemini_client = genai.Client(api_key=self.gemini_key)
-            print("[Agent] Initialized with Google Gemini 2.5 Flash Engine ⚡")
+            print("[Agent] Initialized with Google Gemini 3.6 / 3.5 Flash Engine ⚡")
         elif self.anthropic_key:
             self.provider = "claude"
             self.anthropic_client = AsyncAnthropic(api_key=self.anthropic_key)
