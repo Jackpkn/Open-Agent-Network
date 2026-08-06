@@ -177,7 +177,7 @@ class DataStore {
 
   getAgentByUrl(url: string): RegisteredAgent | undefined {
     const row = this.db.prepare('SELECT * FROM agents WHERE agent_url = ?').get(url) as any;
-    return row ? this.rowToAgent(url) : undefined;
+    return row ? this.rowToAgent(row) : undefined;
   }
 
   getAllAgents(): RegisteredAgent[] {
