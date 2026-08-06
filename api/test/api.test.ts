@@ -79,5 +79,24 @@ describe('Fastify REST API Integration Test Suite', () => {
     const body = JSON.parse(response.payload);
     assert.ok(body.job);
     assert.strictEqual(body.job.agent_id, targetAgent.id);
+
+    // Test raising dispute
+    const jobId = body.job.id;
+    const disputeRes = await app.inject({
+      method: 'POST',
+      url: `/api/v1/jobs/${jobId}/dispute`,
+      payload: { dispute_reason: 'Code review missed reentrancy flaw' },
+    });
+    assert.strictEqual(disputeRes.statusCode, 200);
+
+    // Test resolving dispute
+    const resolveRes = await app.inject({
+      method: 'POST',
+      url: `/api/v1/jobs/${jobId}/resolve-dispute`,
+      payload: { winner: 'hirer' },
+    });
+    assert.strictEqual(resolveRes.statusCode, 200);
+    const resolveBody = JSON.parse(resolveRes.payload);
+    assert.strictEqual(resolveBody.job.status, 'canceled');
   });
 });

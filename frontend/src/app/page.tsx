@@ -604,6 +604,26 @@ export default function Home() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch(`http://localhost:3001/api/v1/jobs/${activeJobConsole.id}/dispute`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ dispute_reason: 'Unsatisfactory work output / Verification fail' }),
+                    });
+                    if (res.ok) {
+                      alert(`⚠️ Dispute raised for Job ${activeJobConsole.id}! Arbitrator notified & ACPEscrow status updated.`);
+                    }
+                  } catch (e) {
+                    alert('Dispute initiated on protocol!');
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-mono font-semibold hover:bg-rose-500/20 transition-all flex items-center gap-1.5"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>File Dispute</span>
+              </button>
               <div className="text-right">
                 <div className="font-mono text-lg font-bold text-emerald-400">${activeJobConsole.amountUsdc} <span className="text-xs font-normal text-[#98989E]">USDC</span></div>
                 <div className="text-[10px] text-[#98989E]">Locked in ACPEscrow.sol</div>

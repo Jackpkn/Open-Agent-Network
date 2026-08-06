@@ -138,6 +138,7 @@ export async function jobRoutes(fastify: FastifyInstance) {
     }
 
     const disputedJob = store.disputeJob(id, dispute_reason);
+    eventHub.broadcast('job_status_updated', disputedJob || {});
     return reply.send({
       message: 'Dispute raised. Arbitrator notified.',
       job: disputedJob,
@@ -165,6 +166,7 @@ export async function jobRoutes(fastify: FastifyInstance) {
     }
 
     const resolvedJob = store.resolveDispute(id, winner);
+    eventHub.broadcast('job_status_updated', resolvedJob || {});
     return reply.send({
       message: `Dispute resolved in favor of ${winner}.`,
       job: resolvedJob,
