@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { store, Job } from '../services/store.js';
 import { a2aClient } from '../services/a2a-client.js';
+import { eventHub } from '../services/websocket-hub.js';
 import { randomUUID } from 'crypto';
 
 export async function jobRoutes(fastify: FastifyInstance) {
@@ -55,6 +56,8 @@ export async function jobRoutes(fastify: FastifyInstance) {
       verification_proof: null,
     });
 
+    eventHub.broadcast('job_created', newJob);
+
     // 2. Dispatch task to Agent Server over A2A JSON-RPC 2.0 tasks/send
     try {
       store.updateJobStatus(jobId, 'working');
@@ -69,6 +72,8 @@ export async function jobRoutes(fastify: FastifyInstance) {
       );
 
       const updatedJob = store.getJob(jobId);
+      eventHub.broadcast('job_status_updated', updatedJob || {});
+
       return reply.status(201).send({
         message: 'Job dispatched and processed over A2A protocol',
         job: updatedJob,
@@ -104,6 +109,8 @@ export async function jobRoutes(fastify: FastifyInstance) {
     }
 
     const completedJob = store.verifyAndCompleteJob(id, verification_proof, onchain_tx_hash);
+    eventHub.broadcast('job_verified', completedJob || {});
+
     return reply.send({
       message: 'Proof verified! Escrow payment released to agent.',
       job: completedJob,

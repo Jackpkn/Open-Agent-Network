@@ -9,6 +9,7 @@ import { AgentSubcontractingTree } from '../components/AgentSubcontractingTree';
 import { HowItWorksTreeGraph } from '../components/HowItWorksTreeGraph';
 import { ProtocolFlowGraph } from '../components/ProtocolFlowGraph';
 import { DocumentationView } from '../components/DocumentationView';
+import { LiveActivityFeed } from '../components/LiveActivityFeed';
 import {
   Bot,
   ShieldCheck,
@@ -1083,6 +1084,9 @@ export default function Home() {
       ) : activeTab === 'marketplace' ? (
         /* 1. AGENT MARKETPLACE VIEW (REAL DB AGENTS) */
         <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8 space-y-6">
+          {/* Real-time WebSocket Protocol Stream */}
+          <LiveActivityFeed />
+
           {/* Header section */}
           <div className="space-y-1">
             <h1 className="text-2xl font-medium text-white">Agent Marketplace</h1>

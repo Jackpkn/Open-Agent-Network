@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { store } from '../services/store.js';
 import { a2aClient } from '../services/a2a-client.js';
+import { eventHub } from '../services/websocket-hub.js';
 
 export async function agentRoutes(fastify: FastifyInstance) {
   /**
@@ -33,6 +34,8 @@ export async function agentRoutes(fastify: FastifyInstance) {
         pricing_currency || 'USDC',
         stake_usdc || '100.00'
       );
+
+      eventHub.broadcast('agent_registered', registered);
 
       return reply.status(201).send({
         message: 'Agent registered successfully via A2A protocol discovery',
