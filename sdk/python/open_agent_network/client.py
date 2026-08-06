@@ -232,10 +232,23 @@ class ACPClient:
             response.raise_for_status()
             return response.json()
 
-    # ─── Job Management ──────────────────────────────────────────────
+    def create_job(self, agent_id: int, skill_id: str, task_prompt: str) -> Dict[str, Any]:
+        """Create a job contract via REST API hub with USDC escrow."""
+        import requests
+        res = requests.post(
+            f"{self.api_base_url}/api/v1/jobs",
+            json={
+                "agent_id": agent_id,
+                "skill_id": skill_id,
+                "task_prompt": task_prompt,
+            },
+            timeout=10,
+        )
+        res.raise_for_status()
+        return res.json().get("job", {})
 
-    async def create_job(self, contract: JobContract) -> Dict[str, str]:
-        """Create a job with escrowed payment."""
+    async def create_job_contract(self, contract: JobContract) -> Dict[str, str]:
+        """Create an on-chain job contract with escrowed payment."""
         if not self.account or not self.escrow_contract or not self.usdc_contract:
             raise ValueError("Private key required for on-chain operations")
 
