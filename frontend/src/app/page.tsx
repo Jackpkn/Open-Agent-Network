@@ -521,57 +521,35 @@ export default function Home() {
             Open Agent Network
           </button>
 
-          {/* Desktop Nav */}
-          <div className="hidden items-center gap-6 md:flex">
+          {/* Desktop Nav (5 Clean Primary Tabs) */}
+          <div className="hidden items-center gap-7 md:flex">
             <button
               onClick={() => { setActiveTab('home'); setActiveJobConsole(null); }}
-              className={`text-sm transition-colors ${activeTab === 'home' ? 'text-white font-medium' : 'text-[#98989E] hover:text-white'}`}
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${activeTab === 'home' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
             >
               Home
             </button>
             <button
               onClick={() => { setActiveTab('marketplace'); setActiveJobConsole(null); }}
-              className={`text-sm transition-colors ${activeTab === 'marketplace' ? 'text-white font-medium' : 'text-[#98989E] hover:text-white'}`}
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${activeTab === 'marketplace' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
             >
               Marketplace
             </button>
             <button
               onClick={() => { setActiveTab('leaderboard'); setActiveJobConsole(null); }}
-              className={`text-sm transition-colors ${activeTab === 'leaderboard' ? 'text-white font-medium' : 'text-[#98989E] hover:text-white'}`}
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${activeTab === 'leaderboard' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
             >
               Leaderboard
             </button>
-            {currentAgent && (
-              <button
-                onClick={() => { setActiveTab('agent-detail'); setActiveJobConsole(null); }}
-                className={`text-sm transition-colors ${activeTab === 'agent-detail' ? 'text-white font-medium' : 'text-[#98989E] hover:text-white'}`}
-              >
-                Agent Detail
-              </button>
-            )}
-            {currentAgent && (
-              <button
-                onClick={() => { setActiveTab('hire-agent'); setActiveJobConsole(null); }}
-                className={`text-sm transition-colors ${activeTab === 'hire-agent' ? 'text-white font-medium' : 'text-[#98989E] hover:text-white'}`}
-              >
-                Hire Agent
-              </button>
-            )}
             <button
               onClick={() => { setActiveTab('dashboard'); setActiveJobConsole(null); }}
-              className={`text-sm transition-colors ${activeTab === 'dashboard' ? 'text-white font-medium' : 'text-[#98989E] hover:text-white'}`}
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${activeTab === 'dashboard' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
             >
               Dashboard
             </button>
             <button
-              onClick={() => { setActiveTab('how-it-works'); setActiveJobConsole(null); }}
-              className={`text-sm transition-colors ${activeTab === 'how-it-works' ? 'text-white font-medium' : 'text-[#98989E] hover:text-white'}`}
-            >
-              How it works
-            </button>
-            <button
               onClick={() => { setActiveTab('docs'); setActiveJobConsole(null); }}
-              className={`text-sm transition-colors ${activeTab === 'docs' ? 'text-white font-medium' : 'text-[#98989E] hover:text-white'}`}
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${activeTab === 'docs' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
             >
               Docs
             </button>
@@ -1427,6 +1405,14 @@ export default function Home() {
       ) : activeTab === 'hire-agent' && currentAgent ? (
         /* 3. HIRE AGENT VIEW */
         <main className="max-w-[600px] mx-auto px-4 md:px-6 py-8 space-y-6">
+          <button
+            onClick={() => setActiveTab('marketplace')}
+            className="text-xs font-mono text-[#98989E] hover:text-white flex items-center gap-1.5 transition-colors"
+          >
+            <ArrowRight className="w-3.5 h-3.5 rotate-180" />
+            <span>Back to Marketplace</span>
+          </button>
+
           <div className="space-y-1">
             <h1 className="text-xl font-medium text-white">Hire {currentAgent.name}</h1>
             <p className="text-xs text-[#98989E]">
