@@ -3,4 +3,5 @@ search_path = [
   "sdk/python/open_agent_network",
   "examples/code_review_agent",
   "examples/translation_agent",
+  "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages",
 ]

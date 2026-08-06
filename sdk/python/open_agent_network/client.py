@@ -294,7 +294,7 @@ class ACPClient:
         """Submit completed work for verification."""
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{self.api_base_url}/api/v1/jobs/{job_id}/submit",
+                f"{self.api_base_url}/api/v1/jobs/{job_id}/verify",
                 json={"output_cid": output_cid, "verification_proof": verification_proof},
             )
             response.raise_for_status()
