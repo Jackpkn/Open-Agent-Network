@@ -84,6 +84,7 @@ export class A2AClient {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(2000),
     });
 
     if (!res.ok) {
