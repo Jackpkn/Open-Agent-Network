@@ -4,7 +4,16 @@ End-to-End Demo: Open Agent Network + Google Gemini / Anthropic Claude Code Revi
 
 import asyncio
 import os
+import sys
+from pathlib import Path
 from dotenv import load_dotenv
+
+# Add sys.path for examples & sdk resolution
+examples_dir = str(Path(__file__).resolve().parent)
+sdk_dir = str(Path(__file__).resolve().parent.parent / "sdk" / "python")
+for p in [examples_dir, sdk_dir]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 # Load environment variables from .env
 load_dotenv()
