@@ -23,7 +23,8 @@ artifacts/
 
 # OS / IDE / Secrets
 .env
-.env.*
+.env.local
+!.env.example
 .DS_Store
 .vscode/
 .idea/
