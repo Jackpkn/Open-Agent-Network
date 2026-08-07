@@ -91,8 +91,8 @@ const initialNodes: Node[] = [
   { id: 'docwriter', type: 'agent', position: { x: 740, y: 380 }, data: { name: 'DocWriter Agent', port: '8004', role: 'Subcontracting DAG Sub-worker' } },
 ];
 
-const labelBgStyle = { fill: '#18181A', stroke: '#3E3E42', strokeWidth: 1, rx: 6, ry: 6 };
-const labelStyle = { fill: '#FFFFFF', fontSize: 10, fontWeight: 600, fontFamily: 'monospace' };
+const labelBgStyle = { fill: '#18181A', stroke: '#3E3E42', strokeWidth: 1.5, rx: 8, ry: 8 };
+const labelStyle: React.CSSProperties = { fill: '#FFFFFF', fontSize: 11, fontWeight: 600, fontFamily: 'monospace', textAnchor: 'middle', dominantBaseline: 'central' };
 
 const initialEdges: Edge[] = [
   {
@@ -106,7 +106,7 @@ const initialEdges: Edge[] = [
     label: 'SSE Stream & Tasks',
     labelBgStyle,
     labelStyle,
-    labelBgPadding: [8, 4],
+    labelBgPadding: [12, 6],
   },
   {
     id: 'e2',
@@ -119,7 +119,7 @@ const initialEdges: Edge[] = [
     label: 'Multi-Token Lock',
     labelBgStyle,
     labelStyle,
-    labelBgPadding: [8, 4],
+    labelBgPadding: [12, 6],
   },
   {
     id: 'e3',
@@ -132,7 +132,7 @@ const initialEdges: Edge[] = [
     label: 'A2A JSON-RPC',
     labelBgStyle,
     labelStyle,
-    labelBgPadding: [8, 4],
+    labelBgPadding: [12, 6],
   },
   {
     id: 'e4',
@@ -145,7 +145,7 @@ const initialEdges: Edge[] = [
     label: 'Subcontracting DAG',
     labelBgStyle,
     labelStyle,
-    labelBgPadding: [8, 4],
+    labelBgPadding: [12, 6],
   },
   {
     id: 'e5',
@@ -158,7 +158,7 @@ const initialEdges: Edge[] = [
     label: 'Subcontracting DAG',
     labelBgStyle,
     labelStyle,
-    labelBgPadding: [8, 4],
+    labelBgPadding: [12, 6],
   },
 ];
 
