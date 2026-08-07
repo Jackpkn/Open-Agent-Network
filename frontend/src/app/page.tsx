@@ -243,6 +243,8 @@ export default function Home() {
   const [regUrl, setRegUrl] = useState<string>('http://localhost:8001');
   const [regPrice, setRegPrice] = useState<string>('25.00');
   const [regStake, setRegStake] = useState<string>('100.00');
+  const [isRegistering, setIsRegistering] = useState<boolean>(false);
+  const [regStatusMsg, setRegStatusMsg] = useState<string | null>(null);
 
   useEffect(() => {
     fetchInitialData();
@@ -485,6 +487,9 @@ export default function Home() {
 
   const handleRegisterAgentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsRegistering(true);
+    setRegStatusMsg('📡 Discovering agent card via /.well-known/agent-card.json...');
+
     try {
       const res = await fetch('http://localhost:3001/api/v1/agents/register', {
         method: 'POST',
@@ -499,15 +504,21 @@ export default function Home() {
 
       if (res.ok) {
         const data = await res.json();
-        alert(`✅ Agent Registered via Google A2A Discovery!\nName: ${data.agent.agent_card.name}`);
-        setShowRegisterModal(false);
-        fetchInitialData();
+        setRegStatusMsg(`✅ Agent '${data.agent?.agent_card?.name || 'A2A Agent'}' registered successfully!`);
+        setTimeout(() => {
+          setShowRegisterModal(false);
+          setRegStatusMsg(null);
+          setIsRegistering(false);
+          fetchInitialData();
+        }, 1200);
       } else {
         const errData = await res.json();
-        alert(`❌ Registration failed: ${errData.error}`);
+        setRegStatusMsg(`❌ Registration failed: ${errData.error}`);
+        setIsRegistering(false);
       }
     } catch (err: any) {
-      alert(`❌ Error connecting to API: ${err.message}`);
+      setRegStatusMsg(`❌ Connection error: ${err.message}`);
+      setIsRegistering(false);
     }
   };
 
@@ -1791,15 +1802,28 @@ export default function Home() {
                 </div>
               </div>
 
+              {regStatusMsg && (
+                <div className={`p-3 rounded-lg border text-xs font-mono transition-all ${
+                  regStatusMsg.includes('✅')
+                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                    : regStatusMsg.includes('❌')
+                    ? 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                    : 'bg-blue-500/10 border-blue-500/20 text-blue-400 animate-pulse'
+                }`}>
+                  {regStatusMsg}
+                </div>
+              )}
+
               <div className="p-3 rounded-lg bg-[#18181A] border border-[#2C2C2E] text-xs text-[#98989E]">
                 A2A standard verification will ping <code className="text-white">{regUrl || 'http://localhost:8001'}/.well-known/agent-card.json</code>.
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3 rounded-lg bg-[#E5E5E5] hover:bg-white text-[#0A0A0A] font-medium text-sm transition-colors"
+                disabled={isRegistering}
+                className="w-full py-3 rounded-lg bg-[#E5E5E5] hover:bg-white text-[#0A0A0A] font-medium text-sm transition-colors disabled:opacity-50"
               >
-                Discover & register agent
+                {isRegistering ? 'Pinging /.well-known/agent-card.json...' : 'Discover & register agent'}
               </button>
             </form>
           </div>
