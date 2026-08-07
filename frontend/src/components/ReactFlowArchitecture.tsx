@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -10,116 +10,108 @@ import {
   useEdgesState,
   addEdge,
   BackgroundVariant,
+  Handle,
+  Position,
   Node,
   Edge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Activity, Shield, Cpu, Lock, Server, Zap, ExternalLink } from 'lucide-react';
+import { Activity, Shield, Cpu, Lock, Server, Zap, ExternalLink, CheckCircle } from 'lucide-react';
+
+// ─── Custom Node 1: Hirer Node ──────────────────────────────────────
+function HirerNodeCustom({ data }: any) {
+  return (
+    <div className="p-4 rounded-xl bg-blue-950/40 border border-blue-500/40 text-blue-400 shadow-xl min-w-[200px]">
+      <Handle type="source" position={Position.Right} id="right" className="!bg-blue-400 !w-3 !h-3" />
+      <div className="flex items-center space-x-2 border-b border-blue-500/20 pb-2 mb-2">
+        <Cpu className="w-4 h-4 text-blue-400" />
+        <span className="font-semibold text-xs text-white">Hirer Web Portal</span>
+      </div>
+      <p className="text-[11px] text-blue-300 font-mono">http://localhost:3005</p>
+      <p className="text-[10px] text-[#98989E] mt-1">Dispatches tasks & streams SSE tokens</p>
+    </div>
+  );
+}
+
+// ─── Custom Node 2: Protocol Hub Node ───────────────────────────────
+function HubNodeCustom({ data }: any) {
+  return (
+    <div className="p-4 rounded-xl bg-purple-950/40 border border-purple-500/40 text-purple-400 shadow-xl min-w-[220px]">
+      <Handle type="target" position={Position.Left} id="left" className="!bg-purple-400 !w-3 !h-3" />
+      <Handle type="source" position={Position.Right} id="right" className="!bg-purple-400 !w-3 !h-3" />
+      <Handle type="source" position={Position.Bottom} id="bottom" className="!bg-purple-400 !w-3 !h-3" />
+      <div className="flex items-center space-x-2 border-b border-purple-500/20 pb-2 mb-2">
+        <Server className="w-4 h-4 text-purple-400" />
+        <span className="font-semibold text-xs text-white">Fastify Protocol Hub</span>
+      </div>
+      <p className="text-[11px] text-purple-300 font-mono">http://localhost:3001</p>
+      <p className="text-[10px] text-[#98989E] mt-1">Auto-Discovery & Event Broadcasts</p>
+    </div>
+  );
+}
+
+// ─── Custom Node 3: Escrow Smart Contract Node ──────────────────────
+function EscrowNodeCustom({ data }: any) {
+  return (
+    <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-400 shadow-xl min-w-[220px]">
+      <Handle type="target" position={Position.Top} id="top" className="!bg-emerald-400 !w-3 !h-3" />
+      <div className="flex items-center space-x-2 border-b border-emerald-500/20 pb-2 mb-2">
+        <Lock className="w-4 h-4 text-emerald-400" />
+        <span className="font-semibold text-xs text-white">ACPEscrow.sol</span>
+      </div>
+      <p className="text-[11px] text-emerald-300 font-mono">Base Sepolia L2</p>
+      <p className="text-[10px] text-[#98989E] mt-1">USDC / USDT / WETH / DEGEN Escrow</p>
+    </div>
+  );
+}
+
+// ─── Custom Node 4: Agent Worker Node ────────────────────────────────
+function AgentNodeCustom({ data }: any) {
+  return (
+    <div className={`p-4 rounded-xl bg-amber-950/40 border border-amber-500/40 text-amber-400 shadow-xl min-w-[220px]`}>
+      <Handle type="target" position={Position.Left} id="left" className="!bg-amber-400 !w-3 !h-3" />
+      <Handle type="source" position={Position.Bottom} id="bottom" className="!bg-amber-400 !w-3 !h-3" />
+      <Handle type="target" position={Position.Top} id="top" className="!bg-amber-400 !w-3 !h-3" />
+      <div className="flex items-center space-x-2 border-b border-amber-500/20 pb-2 mb-2">
+        <Zap className="w-4 h-4 text-amber-400" />
+        <span className="font-semibold text-xs text-white">{data.name}</span>
+      </div>
+      <p className="text-[11px] text-amber-300 font-mono">PORT {data.port}</p>
+      <p className="text-[10px] text-[#98989E] mt-1">{data.role}</p>
+    </div>
+  );
+}
 
 const initialNodes: Node[] = [
-  {
-    id: 'hirer',
-    position: { x: 50, y: 120 },
-    data: { label: 'Hirer Web Portal\n(Port 3005)' },
-    style: {
-      background: 'rgba(59, 130, 246, 0.15)',
-      color: '#60A5FA',
-      border: '1px solid rgba(59, 130, 246, 0.4)',
-      borderRadius: '12px',
-      padding: '16px',
-      fontWeight: '600',
-      fontSize: '13px',
-      boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15)',
-    },
-  },
-  {
-    id: 'hub',
-    position: { x: 320, y: 120 },
-    data: { label: 'Fastify Protocol Hub\n(Port 3001)' },
-    style: {
-      background: 'rgba(168, 85, 247, 0.15)',
-      color: '#C084FC',
-      border: '1px solid rgba(168, 85, 247, 0.4)',
-      borderRadius: '12px',
-      padding: '16px',
-      fontWeight: '600',
-      fontSize: '13px',
-      boxShadow: '0 8px 32px rgba(168, 85, 247, 0.15)',
-    },
-  },
-  {
-    id: 'escrow',
-    position: { x: 320, y: 320 },
-    data: { label: 'ACPEscrow.sol\n(Base L2 Sepolia)' },
-    style: {
-      background: 'rgba(16, 185, 129, 0.15)',
-      color: '#34D399',
-      border: '1px solid rgba(16, 185, 129, 0.4)',
-      borderRadius: '12px',
-      padding: '16px',
-      fontWeight: '600',
-      fontSize: '13px',
-      boxShadow: '0 8px 32px rgba(16, 185, 129, 0.15)',
-    },
-  },
-  {
-    id: 'auditor',
-    position: { x: 600, y: 50 },
-    data: { label: 'Code Auditor Agent\n(Port 8001)' },
-    style: {
-      background: 'rgba(245, 158, 11, 0.15)',
-      color: '#FBBF24',
-      border: '1px solid rgba(245, 158, 11, 0.4)',
-      borderRadius: '12px',
-      padding: '16px',
-      fontWeight: '600',
-      fontSize: '13px',
-      boxShadow: '0 8px 32px rgba(245, 158, 11, 0.15)',
-    },
-  },
-  {
-    id: 'security',
-    position: { x: 600, y: 220 },
-    data: { label: 'SecurityScanner Agent\n(Port 8003)' },
-    style: {
-      background: 'rgba(244, 63, 94, 0.15)',
-      color: '#FB7185',
-      border: '1px solid rgba(244, 63, 94, 0.4)',
-      borderRadius: '12px',
-      padding: '16px',
-      fontWeight: '600',
-      fontSize: '13px',
-      boxShadow: '0 8px 32px rgba(244, 63, 94, 0.15)',
-    },
-  },
-  {
-    id: 'docwriter',
-    position: { x: 600, y: 390 },
-    data: { label: 'DocWriter Agent\n(Port 8004)' },
-    style: {
-      background: 'rgba(14, 165, 233, 0.15)',
-      color: '#38BDF8',
-      border: '1px solid rgba(14, 165, 233, 0.4)',
-      borderRadius: '12px',
-      padding: '16px',
-      fontWeight: '600',
-      fontSize: '13px',
-      boxShadow: '0 8px 32px rgba(14, 165, 233, 0.15)',
-    },
-  },
+  { id: 'hirer', type: 'hirer', position: { x: 30, y: 140 }, data: {} },
+  { id: 'hub', type: 'hub', position: { x: 300, y: 140 }, data: {} },
+  { id: 'escrow', type: 'escrow', position: { x: 300, y: 340 }, data: {} },
+  { id: 'auditor', type: 'agent', position: { x: 620, y: 40 }, data: { name: 'Code Auditor Agent', port: '8001', role: 'Primary A2A Worker' } },
+  { id: 'security', type: 'agent', position: { x: 620, y: 200 }, data: { name: 'SecurityScanner Agent', port: '8003', role: 'Subcontracting DAG Sub-worker' } },
+  { id: 'docwriter', type: 'agent', position: { x: 620, y: 360 }, data: { name: 'DocWriter Agent', port: '8004', role: 'Subcontracting DAG Sub-worker' } },
 ];
 
 const initialEdges: Edge[] = [
-  { id: 'e1', source: 'hirer', target: 'hub', animated: true, style: { stroke: '#3B82F6', strokeWidth: 2 }, label: 'SSE Stream & Tasks' },
-  { id: 'e2', source: 'hub', target: 'escrow', animated: true, style: { stroke: '#10B981', strokeWidth: 2.5 }, label: 'Multi-Token Lock' },
-  { id: 'e3', source: 'hub', target: 'auditor', animated: true, style: { stroke: '#F59E0B', strokeWidth: 2 }, label: 'A2A JSON-RPC' },
-  { id: 'e4', source: 'auditor', target: 'security', animated: true, style: { stroke: '#F43F5E', strokeWidth: 2 }, label: 'Subcontracting DAG' },
-  { id: 'e5', source: 'auditor', target: 'docwriter', animated: true, style: { stroke: '#0EA5E9', strokeWidth: 2 }, label: 'Subcontracting DAG' },
+  { id: 'e1', source: 'hirer', sourceHandle: 'right', target: 'hub', targetHandle: 'left', animated: true, style: { stroke: '#3B82F6', strokeWidth: 2.5 }, label: 'SSE Stream & Tasks' },
+  { id: 'e2', source: 'hub', sourceHandle: 'bottom', target: 'escrow', targetHandle: 'top', animated: true, style: { stroke: '#10B981', strokeWidth: 2.5 }, label: 'Multi-Token Lock' },
+  { id: 'e3', source: 'hub', sourceHandle: 'right', target: 'auditor', targetHandle: 'left', animated: true, style: { stroke: '#F59E0B', strokeWidth: 2.5 }, label: 'A2A JSON-RPC' },
+  { id: 'e4', source: 'auditor', sourceHandle: 'bottom', target: 'security', targetHandle: 'top', animated: true, style: { stroke: '#F43F5E', strokeWidth: 2.5 }, label: 'Subcontracting DAG' },
+  { id: 'e5', source: 'security', sourceHandle: 'bottom', target: 'docwriter', targetHandle: 'top', animated: true, style: { stroke: '#0EA5E9', strokeWidth: 2.5 }, label: 'Subcontracting DAG' },
 ];
 
 export function ReactFlowArchitecture() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  const nodeTypes = useMemo(
+    () => ({
+      hirer: HirerNodeCustom,
+      hub: HubNodeCustom,
+      escrow: EscrowNodeCustom,
+      agent: AgentNodeCustom,
+    }),
+    []
+  );
 
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge(params, eds)),
@@ -136,7 +128,7 @@ export function ReactFlowArchitecture() {
             <h2 className="text-xl font-bold text-white">React Flow 12 Interactive Canvas</h2>
           </div>
           <p className="text-xs text-[#98989E] mt-1">
-            Powered by <code className="text-emerald-400">@xyflow/react</code>. Drag, zoom, connect, and inspect live agent nodes and animated data beams.
+            Powered by <code className="text-emerald-400">@xyflow/react</code> with Custom Glassmorphism Nodes, Alignment Handles & Live Data Beams.
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -147,11 +139,12 @@ export function ReactFlowArchitecture() {
         </div>
       </div>
 
-      {/* React Flow Container */}
-      <div className="h-[550px] w-full rounded-2xl border border-[#2C2C2E] bg-[#121214] overflow-hidden relative shadow-2xl">
+      {/* React Flow Canvas */}
+      <div className="h-[600px] w-full rounded-2xl border border-[#2C2C2E] bg-[#121214] overflow-hidden relative shadow-2xl">
         <ReactFlow
           nodes={nodes}
           edges={edges}
+          nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
