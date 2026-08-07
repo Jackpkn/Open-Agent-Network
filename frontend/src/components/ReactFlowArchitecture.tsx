@@ -202,8 +202,8 @@ export function ReactFlowArchitecture() {
         </div>
       </div>
 
-      {/* React Flow Canvas */}
-      <div className="h-[600px] w-full rounded-2xl border border-[#2C2C2E] bg-[#121214] overflow-hidden relative shadow-2xl">
+      {/* React Flow Frameless Canvas */}
+      <div className="h-[600px] w-full rounded-2xl bg-[#121212] overflow-hidden relative">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -213,10 +213,9 @@ export function ReactFlowArchitecture() {
           onConnect={onConnect}
           fitView
           proOptions={{ hideAttribution: true }}
-          className="bg-[#121214]"
+          className="bg-[#121212]"
         >
           <Controls className="bg-[#1C1C1E] border border-[#2C2C2E] text-white rounded-lg p-1" />
-          <Background color="#2C2C2E" gap={24} size={1.5} variant={BackgroundVariant.Dots} />
         </ReactFlow>
       </div>
     </div>
