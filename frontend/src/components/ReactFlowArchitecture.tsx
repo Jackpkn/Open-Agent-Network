@@ -212,14 +212,10 @@ export function ReactFlowArchitecture() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           fitView
+          proOptions={{ hideAttribution: true }}
           className="bg-[#121214]"
         >
           <Controls className="bg-[#1C1C1E] border border-[#2C2C2E] text-white rounded-lg p-1" />
-          <MiniMap
-            nodeColor="#3B82F6"
-            maskColor="rgba(18, 18, 20, 0.8)"
-            className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-lg"
-          />
           <Background color="#2C2C2E" gap={24} size={1.5} variant={BackgroundVariant.Dots} />
         </ReactFlow>
       </div>
