@@ -1008,8 +1008,8 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Simplified 3-Box Flow Diagram */}
-              <SimpleFlowDiagram />
+              {/* Live Interactive React Flow Architecture Diagram */}
+              <ReactFlowArchitecture />
             </div>
           </section>
 
