@@ -212,11 +212,17 @@ export function ReactFlowArchitecture() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           fitView
+          zoomOnScroll={false}
+          panOnScroll={false}
+          zoomOnPinch={false}
+          zoomOnDoubleClick={false}
+          panOnDrag={false}
+          nodesDraggable={false}
+          nodesConnectable={false}
+          elementsSelectable={false}
           proOptions={{ hideAttribution: true }}
           className="bg-[#121212]"
-        >
-          <Controls className="bg-[#1C1C1E] border border-[#2C2C2E] text-white rounded-lg p-1" />
-        </ReactFlow>
+        />
       </div>
     </div>
   );
