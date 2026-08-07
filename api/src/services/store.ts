@@ -41,6 +41,8 @@ export interface RegisteredAgent {
   pricing_amount?: string;
   pricing_currency?: string;
   stake_usdc?: string;
+  slashed_usdc?: string;
+  slash_reason?: string;
 }
 
 export type TaskState =
@@ -223,6 +225,12 @@ class DataStore {
     this.db.prepare(
       'UPDATE agents SET is_healthy = ?, last_health_check = datetime(\'now\') WHERE id = ?'
     ).run(isHealthy ? 1 : 0, id);
+  }
+
+  slashAgent(id: number, amount: string = '50.00', reason: string = 'Consecutive health check failures') {
+    this.db.prepare(
+      'UPDATE agents SET is_healthy = 0, stake_usdc = CAST(MAX(0, CAST(stake_usdc AS REAL) - ?) AS TEXT) WHERE id = ?'
+    ).run(parseFloat(amount), id);
   }
 
   deleteAgent(id: number) {

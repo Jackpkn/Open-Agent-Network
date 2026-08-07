@@ -1,7 +1,7 @@
 import { WebSocket } from 'ws';
 
 export interface ProtocolEvent {
-  type: 'agent_registered' | 'job_created' | 'job_status_updated' | 'job_verified' | 'consensus_started' | 'consensus_vote' | 'consensus_passed' | 'consensus_failed';
+  type: 'agent_registered' | 'job_created' | 'job_status_updated' | 'job_verified' | 'consensus_started' | 'consensus_vote' | 'consensus_passed' | 'consensus_failed' | 'agent_slashed';
   timestamp: string;
   data: Record<string, any>;
 }

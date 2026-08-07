@@ -86,4 +86,35 @@ export async function agentRoutes(fastify: FastifyInstance) {
     store.deleteAgent(id);
     return reply.send({ status: 'deregistered', id });
   });
+
+  /**
+   * POST /api/v1/agents/:id/slash
+   * Manually or automatically slash an agent's $100 USDC collateral stake
+   */
+  fastify.post<{ Params: { id: string }; Body: { amount?: string; reason?: string } }>(
+    '/api/v1/agents/:id/slash',
+    async (request, reply) => {
+      const id = parseInt(request.params.id, 10);
+      const agent = store.getAgent(id);
+      if (!agent) {
+        return reply.status(404).send({ error: 'Agent not found' });
+      }
+
+      const amount = request.body?.amount || '50.00';
+      const reason = request.body?.reason || 'Manual Slash Triggered';
+
+      store.slashAgent(id, amount, reason);
+      const updated = store.getAgent(id);
+
+      eventHub.broadcast('agent_slashed', {
+        agentId: id,
+        agentName: agent.agent_card?.name,
+        slashedUsdc: amount,
+        reason,
+        message: `⚠️ Agent #${id} '${agent.agent_card?.name}' slashed $${amount} USDC collateral!`,
+      });
+
+      return reply.send({ message: 'Agent slashed successfully', agent: updated });
+    }
+  );
 }
