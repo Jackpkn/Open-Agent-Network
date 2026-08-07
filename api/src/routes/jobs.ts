@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { store, Job } from '../services/store.js';
 import { a2aClient } from '../services/a2a-client.js';
 import { eventHub } from '../services/websocket-hub.js';
+import { consensusOracle } from '../services/consensus-oracle.js';
 import { randomUUID } from 'crypto';
 
 export async function jobRoutes(fastify: FastifyInstance) {
@@ -245,5 +246,19 @@ export async function jobRoutes(fastify: FastifyInstance) {
       return reply.status(404).send({ error: 'Job not found' });
     }
     return reply.send(job);
+  });
+
+  /**
+   * POST /api/v1/jobs/:id/verify-consensus
+   * Trigger Multi-Agent Voting Consensus Oracle evaluation for escrow release
+   */
+  fastify.post<{ Params: { id: string } }>('/api/v1/jobs/:id/verify-consensus', async (request, reply) => {
+    const job = store.getJob(request.params.id);
+    if (!job) {
+      return reply.status(404).send({ error: 'Job not found' });
+    }
+
+    const consensusResult = await consensusOracle.evaluateConsensus(job);
+    return reply.send(consensusResult);
   });
 }

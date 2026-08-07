@@ -479,7 +479,25 @@ export default function Home() {
           }
         }
       }
-      setLiveSseLogs((prev) => [...prev, '🎉 Task Completed! Escrow verification passed.']);
+
+      if (verificationMethod.toLowerCase().includes('consensus')) {
+        setLiveSseLogs((prev) => [...prev, '🤖 Initiating 3-Agent Consensus Oracle Voting...']);
+        try {
+          const jobObj = activeJobConsole || userJobs[0];
+          if (jobObj && jobObj.id) {
+            const cRes = await fetch(`http://localhost:3001/api/v1/jobs/${jobObj.id}/verify-consensus`, { method: 'POST' });
+            if (cRes.ok) {
+              const cData = await cRes.json();
+              cData.votes?.forEach((v: any) => {
+                setLiveSseLogs((prev) => [...prev, `🗳️ [Vote] ${v.agentName}: ${v.vote} (Confidence: ${(v.confidence * 100).toFixed(0)}%)`]);
+              });
+              setLiveSseLogs((prev) => [...prev, `🎉 Majority Consensus Reached (${cData.approvals}/${cData.totalVotes} Votes)! Escrow Released.`]);
+            }
+          }
+        } catch (e) {}
+      } else {
+        setLiveSseLogs((prev) => [...prev, '🎉 Task Completed! Escrow verification passed.']);
+      }
       fetchInitialData();
     } catch (err: any) {
       setLiveSseLogs((prev) => [...prev, `⚡ Execution complete: Task outcome saved to SQLite.`]);
