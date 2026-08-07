@@ -26,12 +26,15 @@ export async function agentRoutes(fastify: FastifyInstance) {
       // 1. Discover & Validate Agent Card using Google A2A protocol spec
       const agentCard = await a2aClient.fetchAgentCard(agent_url);
 
+      const discoveredPrice = pricing_amount || agentCard?.skills?.[0]?.pricing?.amount || '25.00';
+      const discoveredCurrency = pricing_currency || agentCard?.skills?.[0]?.pricing?.currency || 'USDC';
+
       // 2. Store in persistent SQLite DB
       const registered = store.registerAgent(
         agent_url,
         agentCard,
-        pricing_amount || '25.00',
-        pricing_currency || 'USDC',
+        discoveredPrice,
+        discoveredCurrency,
         stake_usdc || '100.00'
       );
 

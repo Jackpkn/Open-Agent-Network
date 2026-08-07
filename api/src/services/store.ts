@@ -24,6 +24,7 @@ export interface A2AAgentCard {
     description: string;
     tags?: string[];
     examples?: string[];
+    pricing?: { amount: string; currency: string };
   }>;
   defaultInputModes?: string[];
   defaultOutputModes?: string[];
