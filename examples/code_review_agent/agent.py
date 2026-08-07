@@ -114,13 +114,18 @@ Respond STRICTLY with a valid JSON object matching this exact schema:
 """
         content = ""
         if self.provider == "gemini" and self.gemini_client:
+            from google.genai import types
+            thinking_gen_config = types.GenerateContentConfig(
+                thinking_config=types.ThinkingConfig(thinking_budget=1024)
+            )
             models_to_try = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.0-flash"]
             for model_name in models_to_try:
                 try:
-                    print(f"[Agent] Calling Gemini model '{model_name}' with prompt length {len(prompt)}...")
+                    print(f"[Agent] Calling Gemini model '{model_name}' with Thinking Config budget=1024...")
                     response = self.gemini_client.models.generate_content(
                         model=model_name,
                         contents=prompt,
+                        config=thinking_gen_config,
                     )
                     if response and response.text:
                         content = response.text

@@ -96,7 +96,11 @@ class SecurityScannerA2AHandler(BaseHTTPRequestHandler):
 
             try:
                 from google import genai
+                from google.genai import types
                 client = genai.Client(api_key=api_key)
+                thinking_gen_config = types.GenerateContentConfig(
+                    thinking_config=types.ThinkingConfig(thinking_budget=1024)
+                )
                 prompt_text = """You are an expert defensive software engineering assistant reviewing code quality and security best practices.
 
 Review the input code for defensive programming, input validation, and secure state transitions.
@@ -120,7 +124,11 @@ Format your output EXACTLY as follows:
                 content = ""
                 for model_name in ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.0-flash"]:
                     try:
-                        res = client.models.generate_content(model=model_name, contents=prompt_text)
+                        res = client.models.generate_content(
+                            model=model_name,
+                            contents=prompt_text,
+                            config=thinking_gen_config,
+                        )
                         if res and res.text:
                             content = res.text
                             break
