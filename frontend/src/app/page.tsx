@@ -11,7 +11,7 @@ import { ProtocolFlowGraph } from '../components/ProtocolFlowGraph';
 import { DocumentationView } from '../components/DocumentationView';
 import { LiveActivityFeed } from '../components/LiveActivityFeed';
 import { AgentLeaderboard } from '../components/AgentLeaderboard';
-import { ArchitectureCanvas } from '../components/ArchitectureCanvas';
+import { ReactFlowArchitecture } from '../components/ReactFlowArchitecture';
 import {
   Bot,
   ShieldCheck,
@@ -1771,7 +1771,7 @@ export default function Home() {
         </main>
       ) : activeTab === 'architecture' ? (
         <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
-          <ArchitectureCanvas />
+          <ReactFlowArchitecture />
         </main>
       ) : activeTab === 'docs' ? (
         <DocumentationView />
