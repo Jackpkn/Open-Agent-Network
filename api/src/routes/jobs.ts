@@ -3,6 +3,7 @@ import { store, Job } from '../services/store.js';
 import { a2aClient } from '../services/a2a-client.js';
 import { eventHub } from '../services/websocket-hub.js';
 import { consensusOracle } from '../services/consensus-oracle.js';
+import { disputeOracle } from '../services/dispute-oracle.js';
 import { randomUUID } from 'crypto';
 
 export async function jobRoutes(fastify: FastifyInstance) {
@@ -261,4 +262,23 @@ export async function jobRoutes(fastify: FastifyInstance) {
     const consensusResult = await consensusOracle.evaluateConsensus(job);
     return reply.send(consensusResult);
   });
+
+  /**
+   * POST /api/v1/jobs/:id/arbitrate
+   * Trigger Autonomous Dispute Arbitration Oracle for ACPEscrow.sol resolution
+   */
+  fastify.post<{ Params: { id: string }; Body: { reason?: string } }>(
+    '/api/v1/jobs/:id/arbitrate',
+    async (request, reply) => {
+      const { id } = request.params;
+      const reason = request.body?.reason || 'Deliverable quality dispute raised by Hirer';
+
+      try {
+        const result = await disputeOracle.arbitrateDispute(id, reason);
+        return reply.send(result);
+      } catch (err: any) {
+        return reply.status(404).send({ error: err.message });
+      }
+    }
+  );
 }
