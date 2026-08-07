@@ -92,7 +92,7 @@ const initialNodes: Node[] = [
 ];
 
 const labelBgStyle = { fill: '#18181A', stroke: '#3E3E42', strokeWidth: 1.5, rx: 8, ry: 8 };
-const labelStyle: React.CSSProperties = { fill: '#FFFFFF', fontSize: 11, fontWeight: 600, fontFamily: 'monospace', textAnchor: 'middle', dominantBaseline: 'central' };
+const labelStyle: React.CSSProperties = { fill: '#FFFFFF', fontSize: 10, fontWeight: 600, fontFamily: 'monospace' };
 
 const initialEdges: Edge[] = [
   {
