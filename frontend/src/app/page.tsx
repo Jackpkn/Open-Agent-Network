@@ -231,6 +231,7 @@ export default function Home() {
   const [repoUrl, setRepoUrl] = useState<string>('');
   const [selectedCapability, setSelectedCapability] = useState<string>('Python code review — $25.00 USDC');
   const [verificationMethod, setVerificationMethod] = useState<string>('CI pass (recommended)');
+  const [selectedPaymentToken, setSelectedPaymentToken] = useState<string>('USDC');
 
   // Stream state
   const [jobCreated, setJobCreated] = useState<boolean>(false);
@@ -364,7 +365,7 @@ export default function Home() {
     const mockTx = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
 
     setJobCreated(true);
-    setLiveSseLogs([`[00:00] 🔒 Locking $${totalAmount} USDC into ACPEscrow.sol on Base Sepolia L2...`]);
+    setLiveSseLogs([`[00:00] 🔒 Locking $${totalAmount} ${selectedPaymentToken} into ACPEscrow.sol on Base Sepolia L2...`]);
 
     let accumulatedOutput = '';
 
@@ -1459,8 +1460,8 @@ export default function Home() {
                 setFallbackPrompt={setTaskDescription}
               />
 
-              {/* Select Capability & Verification Dropdowns */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Select Capability, Payment Token, & Verification Dropdowns */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1">
                   <label className="block text-[11px] font-medium text-[#98989E]">Capability & Pricing</label>
                   <select
@@ -1468,7 +1469,21 @@ export default function Home() {
                     onChange={(e) => setSelectedCapability(e.target.value)}
                     className="w-full h-10 px-3 rounded-lg bg-[#18181A] border border-[#2C2C2E] text-xs text-white focus:outline-none focus:border-blue-500 transition-colors"
                   >
-                    <option>{currentAgent.skillName} — ${currentAgent.pricing}.00 USDC</option>
+                    <option>{currentAgent.skillName} — ${currentAgent.pricing}.00</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-medium text-[#98989E]">Escrow Payment Token</label>
+                  <select
+                    value={selectedPaymentToken}
+                    onChange={(e) => setSelectedPaymentToken(e.target.value)}
+                    className="w-full h-10 px-3 rounded-lg bg-[#18181A] border border-emerald-500/30 text-xs font-mono font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 transition-colors"
+                  >
+                    <option value="USDC">USDC (Base L2)</option>
+                    <option value="USDT">USDT (Tether)</option>
+                    <option value="WETH">WETH (Wrapped Ether)</option>
+                    <option value="DEGEN">DEGEN (Base Token)</option>
                   </select>
                 </div>
 

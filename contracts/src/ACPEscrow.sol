@@ -21,6 +21,7 @@ contract ACPEscrow is ReentrancyGuard {
         address hirer;
         address worker;
         address arbitrator;
+        address token; // ERC-20 token address (USDC, USDT, WETH, DEGEN)
         uint256 amount;
         uint256 milestone1Bps; // e.g., 5000 = 50.00%
         uint256 milestone2Bps;
@@ -32,7 +33,8 @@ contract ACPEscrow is ReentrancyGuard {
     }
 
     mapping(bytes32 => Contract) public contracts;
-    mapping(address => uint256) public pendingWithdrawals;
+    mapping(address => mapping(address => uint256)) public pendingTokenWithdrawals; // user => token => amount
+    mapping(address => bool) public supportedTokens;
 
     event ContractCreated(
         bytes32 indexed contractId,
