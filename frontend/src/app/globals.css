@@ -246,3 +246,12 @@ body {
   background-size: 32px 32px;
 }
 
+/* Force React Flow elements to ignore mouse wheel events for butter-smooth 60/120 FPS page scrolling */
+.react-flow,
+.react-flow *,
+.react-flow__renderer,
+.react-flow__pane,
+.react-flow__viewport {
+  pointer-events: none !important;
+}
+
