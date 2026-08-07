@@ -433,6 +433,8 @@ export default function Home() {
     const proxyUrl = `http://localhost:3001/api/v1/jobs/stream-proxy?agentUrl=${encodeURIComponent(selectedAgent.ownerDid)}&prompt=${promptParam}`;
     const directUrl = `${selectedAgent.ownerDid.replace(/\/$/, '')}/a2a/v1/stream?prompt=${promptParam}`;
 
+    setLiveSseLogs((prev) => [...prev, `🟡 Handshaking & pinging A2A Agent at ${selectedAgent.ownerDid}/.well-known/agent-card.json...`]);
+
     try {
       let res = await fetch(proxyUrl).catch(() => null);
       if (!res || !res.ok || !res.body) {
@@ -442,7 +444,7 @@ export default function Home() {
         throw new Error(`HTTP ${res.status}: Stream failed`);
       }
 
-      setLiveSseLogs((prev) => [...prev, '🟢 Connected to A2A Agent SSE Stream']);
+      setLiveSseLogs((prev) => [...prev, `🟢 Connected! Agent '${selectedAgent.name}' initialized. Stream active.`]);
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
