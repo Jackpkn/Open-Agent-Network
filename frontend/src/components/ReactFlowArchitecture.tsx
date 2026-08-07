@@ -3,20 +3,64 @@
 import React, { useCallback, useMemo } from 'react';
 import {
   ReactFlow,
-  MiniMap,
   Controls,
-  Background,
   useNodesState,
   useEdgesState,
   addEdge,
-  BackgroundVariant,
   Handle,
   Position,
   Node,
   Edge,
+  BaseEdge,
+  EdgeLabelRenderer,
+  getBezierPath,
+  EdgeProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Activity, Shield, Cpu, Lock, Server, Zap, ExternalLink, CheckCircle } from 'lucide-react';
+
+// ─── Custom Edge Component with Pixel-Perfect Pill Overlay ────────────
+function CustomPillEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  style = {},
+  markerEnd,
+  label,
+}: EdgeProps) {
+  const [edgePath, labelX, labelY] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+  });
+
+  return (
+    <>
+      <BaseEdge path={edgePath} markerEnd={markerEnd} style={style} />
+      {label && (
+        <EdgeLabelRenderer>
+          <div
+            style={{
+              position: 'absolute',
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              pointerEvents: 'all',
+            }}
+            className="px-3.5 py-1 rounded-full bg-[#18181A] border border-[#3E3E42] text-[11px] font-mono font-semibold text-white shadow-xl flex items-center justify-center whitespace-nowrap z-10"
+          >
+            {label}
+          </div>
+        </EdgeLabelRenderer>
+      )}
+    </>
+  );
+}
 
 // ─── Custom Node 1: Hirer Node ──────────────────────────────────────
 function HirerNodeCustom({ data }: any) {
@@ -84,19 +128,17 @@ function AgentNodeCustom({ data }: any) {
 
 const initialNodes: Node[] = [
   { id: 'hirer', type: 'hirer', position: { x: 20, y: 140 }, data: {} },
-  { id: 'hub', type: 'hub', position: { x: 380, y: 140 }, data: {} },
-  { id: 'escrow', type: 'escrow', position: { x: 380, y: 380 }, data: {} },
-  { id: 'auditor', type: 'agent', position: { x: 740, y: 20 }, data: { name: 'Code Auditor Agent', port: '8001', role: 'Primary A2A Worker' } },
-  { id: 'security', type: 'agent', position: { x: 740, y: 200 }, data: { name: 'SecurityScanner Agent', port: '8003', role: 'Subcontracting DAG Sub-worker' } },
-  { id: 'docwriter', type: 'agent', position: { x: 740, y: 380 }, data: { name: 'DocWriter Agent', port: '8004', role: 'Subcontracting DAG Sub-worker' } },
+  { id: 'hub', type: 'hub', position: { x: 420, y: 140 }, data: {} },
+  { id: 'escrow', type: 'escrow', position: { x: 420, y: 380 }, data: {} },
+  { id: 'auditor', type: 'agent', position: { x: 820, y: 20 }, data: { name: 'Code Auditor Agent', port: '8001', role: 'Primary A2A Worker' } },
+  { id: 'security', type: 'agent', position: { x: 820, y: 200 }, data: { name: 'SecurityScanner Agent', port: '8003', role: 'Subcontracting DAG Sub-worker' } },
+  { id: 'docwriter', type: 'agent', position: { x: 820, y: 380 }, data: { name: 'DocWriter Agent', port: '8004', role: 'Subcontracting DAG Sub-worker' } },
 ];
-
-const labelBgStyle = { fill: '#18181A', stroke: '#3E3E42', strokeWidth: 1.5, rx: 8, ry: 8 };
-const labelStyle: React.CSSProperties = { fill: '#FFFFFF', fontSize: 10, fontWeight: 600, fontFamily: 'monospace' };
 
 const initialEdges: Edge[] = [
   {
     id: 'e1',
+    type: 'customPill',
     source: 'hirer',
     sourceHandle: 'right',
     target: 'hub',
@@ -104,12 +146,10 @@ const initialEdges: Edge[] = [
     animated: true,
     style: { stroke: '#3B82F6', strokeWidth: 2.5 },
     label: 'SSE Stream & Tasks',
-    labelBgStyle,
-    labelStyle,
-    labelBgPadding: [12, 6],
   },
   {
     id: 'e2',
+    type: 'customPill',
     source: 'hub',
     sourceHandle: 'bottom',
     target: 'escrow',
@@ -117,12 +157,10 @@ const initialEdges: Edge[] = [
     animated: true,
     style: { stroke: '#10B981', strokeWidth: 2.5 },
     label: 'Multi-Token Lock',
-    labelBgStyle,
-    labelStyle,
-    labelBgPadding: [12, 6],
   },
   {
     id: 'e3',
+    type: 'customPill',
     source: 'hub',
     sourceHandle: 'right',
     target: 'auditor',
@@ -130,12 +168,10 @@ const initialEdges: Edge[] = [
     animated: true,
     style: { stroke: '#F59E0B', strokeWidth: 2.5 },
     label: 'A2A JSON-RPC',
-    labelBgStyle,
-    labelStyle,
-    labelBgPadding: [12, 6],
   },
   {
     id: 'e4',
+    type: 'customPill',
     source: 'auditor',
     sourceHandle: 'bottom',
     target: 'security',
@@ -143,12 +179,10 @@ const initialEdges: Edge[] = [
     animated: true,
     style: { stroke: '#F43F5E', strokeWidth: 2.5 },
     label: 'Subcontracting DAG',
-    labelBgStyle,
-    labelStyle,
-    labelBgPadding: [12, 6],
   },
   {
     id: 'e5',
+    type: 'customPill',
     source: 'security',
     sourceHandle: 'bottom',
     target: 'docwriter',
@@ -156,9 +190,6 @@ const initialEdges: Edge[] = [
     animated: true,
     style: { stroke: '#0EA5E9', strokeWidth: 2.5 },
     label: 'Subcontracting DAG',
-    labelBgStyle,
-    labelStyle,
-    labelBgPadding: [12, 6],
   },
 ];
 
@@ -172,6 +203,13 @@ export function ReactFlowArchitecture() {
       hub: HubNodeCustom,
       escrow: EscrowNodeCustom,
       agent: AgentNodeCustom,
+    }),
+    []
+  );
+
+  const edgeTypes = useMemo(
+    () => ({
+      customPill: CustomPillEdge,
     }),
     []
   );
@@ -191,7 +229,7 @@ export function ReactFlowArchitecture() {
             <h2 className="text-xl font-bold text-white">React Flow 12 Interactive Canvas</h2>
           </div>
           <p className="text-xs text-[#98989E] mt-1">
-            Powered by <code className="text-emerald-400">@xyflow/react</code> with Custom Glassmorphism Nodes, Alignment Handles & Live Data Beams.
+            Powered by <code className="text-emerald-400">@xyflow/react</code> with EdgeLabelRenderer & Live Data Beams.
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -208,6 +246,7 @@ export function ReactFlowArchitecture() {
           nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
