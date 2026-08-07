@@ -193,7 +193,7 @@ const initialEdges: Edge[] = [
   },
 ];
 
-export function ReactFlowArchitecture() {
+export function ReactFlowArchitecture({ pointerEventsNone = true }: { pointerEventsNone?: boolean }) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
@@ -241,7 +241,7 @@ export function ReactFlowArchitecture() {
       </div>
 
       {/* React Flow Frameless Canvas */}
-      <div className="h-[600px] w-full rounded-2xl bg-[#121212] overflow-hidden relative">
+      <div className={`h-[600px] w-full rounded-2xl bg-[#121212] overflow-hidden relative ${pointerEventsNone ? 'pointer-events-none' : ''}`}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
