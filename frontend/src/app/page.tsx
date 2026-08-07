@@ -12,6 +12,7 @@ import { DocumentationView } from '../components/DocumentationView';
 import { LiveActivityFeed } from '../components/LiveActivityFeed';
 import { AgentLeaderboard } from '../components/AgentLeaderboard';
 import { ReactFlowArchitecture } from '../components/ReactFlowArchitecture';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot,
   ShieldCheck,
@@ -1023,9 +1024,14 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {agentsList.slice(0, 3).map((agent) => (
-                    <div
+                  {agentsList.slice(0, 3).map((agent, i) => (
+                    <motion.div
                       key={agent.id}
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: i * 0.1 }}
+                      whileHover={{ y: -4, scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
                       onClick={() => handleAgentSelect(agent)}
                       className="hologram-card animate-scanline rounded-2xl p-5 cursor-pointer space-y-4 transition-all"
                     >
@@ -1056,7 +1062,7 @@ export default function Home() {
                         </div>
                         <div className="text-xs text-[#98989E]">★ {agent.rating || 5.0} ({agent.completedJobs})</div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               )}
