@@ -11,6 +11,7 @@ import { ProtocolFlowGraph } from '../components/ProtocolFlowGraph';
 import { DocumentationView } from '../components/DocumentationView';
 import { LiveActivityFeed } from '../components/LiveActivityFeed';
 import { AgentLeaderboard } from '../components/AgentLeaderboard';
+import { ArchitectureCanvas } from '../components/ArchitectureCanvas';
 import {
   Bot,
   ShieldCheck,
@@ -211,7 +212,7 @@ export default function Home() {
   const { data: balanceData } = useBalance({ address });
   const { sendTransactionAsync } = useSendTransaction();
 
-  const [activeTab, setActiveTab] = useState<'home' | 'marketplace' | 'agent-detail' | 'hire-agent' | 'dashboard' | 'how-it-works' | 'docs' | 'leaderboard'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'marketplace' | 'agent-detail' | 'hire-agent' | 'dashboard' | 'how-it-works' | 'docs' | 'leaderboard' | 'architecture'>('home');
   const [activeJobConsole, setActiveJobConsole] = useState<ActiveJob | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -586,6 +587,12 @@ export default function Home() {
               className={`text-xs font-semibold uppercase tracking-wider transition-colors ${activeTab === 'dashboard' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
             >
               Dashboard
+            </button>
+            <button
+              onClick={() => { setActiveTab('architecture'); setActiveJobConsole(null); }}
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${activeTab === 'architecture' ? 'text-white border-b-2 border-emerald-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
+            >
+              Architecture
             </button>
             <button
               onClick={() => { setActiveTab('docs'); setActiveJobConsole(null); }}
@@ -1761,6 +1768,10 @@ export default function Home() {
       ) : activeTab === 'leaderboard' ? (
         <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
           <AgentLeaderboard agents={agentsList} />
+        </main>
+      ) : activeTab === 'architecture' ? (
+        <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
+          <ArchitectureCanvas />
         </main>
       ) : activeTab === 'docs' ? (
         <DocumentationView />
