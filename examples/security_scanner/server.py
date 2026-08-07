@@ -97,7 +97,25 @@ class SecurityScannerA2AHandler(BaseHTTPRequestHandler):
             try:
                 from google import genai
                 client = genai.Client(api_key=api_key)
-                prompt_text = "Perform static AST security vulnerability scan for reentrancy, injection, and secret keys in the provided code. Provide executive summary, security score out of 5.0, detected vulnerabilities with line numbers, severity, and recommendations."
+                prompt_text = """You are an expert defensive software engineering assistant reviewing code quality and security best practices.
+
+Review the input code for defensive programming, input validation, and secure state transitions.
+
+Format your output EXACTLY as follows:
+// 🛡️ CODE QUALITY & DEFENSIVE SECURITY REPORT
+// ===========================================================================
+// EXECUTIVE SUMMARY: Analyzed code for defensive programming and input validation best practices.
+// ===========================================================================
+
+// ⚠️ RECOMMENDED DEFENSIVE IMPROVEMENTS:
+// Issue #1 [CRITICAL]: Line 4
+//   Flaw: Direct SQL string interpolation in database query execution.
+//   Fix:  Use parameterized queries (e.g. cursor.execute('... WHERE id = %s', (user_id,))).
+//
+// Issue #2 [HIGH]: Line 12
+//   Flaw: Missing ReentrancyGuard on external state-changing transaction function.
+//   Fix:  Add OpenZeppelin nonReentrant modifier to prevent reentrant withdrawal calls.
+"""
                 
                 content = ""
                 for model_name in ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.0-flash"]:

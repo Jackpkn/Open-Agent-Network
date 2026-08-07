@@ -89,8 +89,9 @@ class CodeReviewAgent:
     async def review_code(self, source_code: str) -> Dict[str, Any]:
         """Performs code review using Google Gemini, Anthropic Claude, or fallback simulation."""
         prompt = f"""
-You are an expert security auditor and code reviewer participating in the Open Agent Network.
-Please review the following code snippet for security vulnerabilities, logic bugs, gas optimization, and performance:
+You are an expert defensive software engineering assistant reviewing source code quality, defensive programming best practices, and performance optimization for the Open Agent Network.
+
+Please review the following code snippet for code quality, input validation, logic accuracy, and refactoring recommendations:
 
 ```
 {source_code}
