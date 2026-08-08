@@ -13,6 +13,7 @@ import { LiveActivityFeed } from '../components/LiveActivityFeed';
 import { AgentLeaderboard } from '../components/AgentLeaderboard';
 import { ReactFlowArchitecture } from '../components/ReactFlowArchitecture';
 import { SimpleFlowDiagram } from '../components/SimpleFlowDiagram';
+import { AgentInspectorModal } from '../components/AgentInspectorModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot,
@@ -222,6 +223,7 @@ export default function Home() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [showHireModal, setShowHireModal] = useState<boolean>(false);
   const [showRegisterModal, setShowRegisterModal] = useState<boolean>(false);
+  const [showInspectorModal, setShowInspectorModal] = useState<boolean>(false);
   const [userJobs, setUserJobs] = useState<ActiveJob[]>([]);
   const [isLoadingApi, setIsLoadingApi] = useState<boolean>(true);
 
@@ -604,8 +606,15 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Connect Wallet & Register Agent */}
+          {/* Connect Wallet, Inspect & Register Agent */}
           <div className="hidden md:flex items-center space-x-3">
+            <button
+              onClick={() => setShowInspectorModal(true)}
+              className="rounded-lg border border-[#2C2C2E] bg-[#1C1C1E] px-3.5 py-2 text-xs font-semibold text-blue-400 hover:text-white transition-colors hover:bg-[#242426] flex items-center gap-1.5"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>Inspect Agent</span>
+            </button>
             <button
               onClick={() => setShowRegisterModal(true)}
               className="rounded-lg border border-[#2C2C2E] bg-[#1C1C1E] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#242426]"
@@ -1881,6 +1890,12 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Agent Inspector & Live Webhook Debugger Modal */}
+      <AgentInspectorModal
+        isOpen={showInspectorModal}
+        onClose={() => setShowInspectorModal(false)}
+      />
     </div>
   );
 }

@@ -52,6 +52,70 @@ export async function agentRoutes(fastify: FastifyInstance) {
   });
 
   /**
+   * POST /api/v1/agents/inspect
+   * One-Click Agent URL Inspector & Live Webhook Debugger
+   */
+  fastify.post<{ Body: { agent_url: string } }>('/api/v1/agents/inspect', async (request, reply) => {
+    const { agent_url } = request.body || {};
+    if (!agent_url) {
+      return reply.status(400).send({ error: 'agent_url is required' });
+    }
+
+    const startTime = Date.now();
+    const errors: string[] = [];
+    const checks = {
+      cardDiscovered: false,
+      hasValidName: false,
+      hasSkills: false,
+      hasValidPricing: false,
+      supportsA2A: false,
+    };
+
+    try {
+      const agentCard = await a2aClient.fetchAgentCard(agent_url);
+      const pingMs = Date.now() - startTime;
+
+      if (agentCard) {
+        checks.cardDiscovered = true;
+        if (agentCard.name) checks.hasValidName = true;
+        else errors.push('Missing "name" field in agent-card.json');
+
+        if (Array.isArray(agentCard.skills) && agentCard.skills.length > 0) {
+          checks.hasSkills = true;
+        } else {
+          errors.push('No skills array defined in agent-card.json');
+        }
+
+        if (agentCard.skills?.[0]?.pricing?.amount) {
+          checks.hasValidPricing = true;
+        } else {
+          errors.push('Skill missing pricing amount');
+        }
+
+        checks.supportsA2A = true;
+      }
+
+      return reply.send({
+        status: errors.length === 0 ? 'valid' : 'warning',
+        agent_url,
+        ping_ms: pingMs,
+        agent_card: agentCard,
+        checks,
+        errors,
+      });
+    } catch (err: any) {
+      return reply.status(400).send({
+        status: 'error',
+        agent_url,
+        ping_ms: Date.now() - startTime,
+        error: `Discovery failed: ${err.message}`,
+        checks,
+        errors: [`Could not fetch /.well-known/agent-card.json from ${agent_url}: ${err.message}`],
+      });
+    }
+  });
+
+  /**
    * GET /api/v1/agents/search
    * Search registered agents by skill or keyword query
    */
