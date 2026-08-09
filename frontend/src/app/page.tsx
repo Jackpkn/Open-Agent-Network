@@ -562,65 +562,65 @@ export default function Home() {
           {/* Logo */}
           <button
             onClick={() => { setActiveTab('home'); setActiveJobConsole(null); }}
-            className="text-[17px] font-medium text-white hover:opacity-80 transition-opacity"
+            className="text-[17px] font-bold text-white hover:opacity-80 transition-opacity shrink-0 mr-4"
           >
             Open Agent Network
           </button>
 
-          {/* Desktop Nav (5 Clean Primary Tabs) */}
-          <div className="hidden items-center gap-7 md:flex">
+          {/* Desktop Nav (Clean, Non-Overlapping Tabs) */}
+          <div className="hidden items-center gap-5 lg:gap-6 md:flex shrink-0">
             <button
               onClick={() => { setActiveTab('home'); setActiveJobConsole(null); }}
-              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${activeTab === 'home' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors whitespace-nowrap ${activeTab === 'home' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
             >
               Home
             </button>
             <button
               onClick={() => { setActiveTab('marketplace'); setActiveJobConsole(null); }}
-              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${activeTab === 'marketplace' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors whitespace-nowrap ${activeTab === 'marketplace' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
             >
               Marketplace
             </button>
             <button
               onClick={() => { setActiveTab('leaderboard'); setActiveJobConsole(null); }}
-              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${activeTab === 'leaderboard' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors whitespace-nowrap ${activeTab === 'leaderboard' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
             >
               Leaderboard
             </button>
             <button
               onClick={() => { setActiveTab('dashboard'); setActiveJobConsole(null); }}
-              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${activeTab === 'dashboard' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors whitespace-nowrap ${activeTab === 'dashboard' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
             >
               Dashboard
             </button>
             <button
               onClick={() => { setActiveTab('architecture'); setActiveJobConsole(null); }}
-              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${activeTab === 'architecture' ? 'text-white border-b-2 border-emerald-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors whitespace-nowrap ${activeTab === 'architecture' ? 'text-white border-b-2 border-emerald-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
             >
               Architecture
             </button>
             <button
               onClick={() => { setActiveTab('docs'); setActiveJobConsole(null); }}
-              className={`text-xs font-semibold uppercase tracking-wider transition-colors ${activeTab === 'docs' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors whitespace-nowrap ${activeTab === 'docs' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
             >
               Docs
             </button>
           </div>
 
           {/* Connect Wallet, Inspect & Register Agent */}
-          <div className="hidden md:flex items-center space-x-3">
+          <div className="hidden md:flex items-center space-x-2.5 shrink-0 ml-4">
             <button
               onClick={() => setShowInspectorModal(true)}
-              className="rounded-lg border border-[#2C2C2E] bg-[#1C1C1E] px-3.5 py-2 text-xs font-semibold text-blue-400 hover:text-white transition-colors hover:bg-[#242426] flex items-center gap-1.5"
+              className="rounded-lg border border-[#2C2C2E] bg-[#1C1C1E] px-3 py-1.5 text-xs font-semibold text-blue-400 hover:text-white transition-colors hover:bg-[#242426] flex items-center gap-1.5 shrink-0 whitespace-nowrap"
             >
               <Search className="w-3.5 h-3.5" />
-              <span>Inspect Agent</span>
+              <span>Inspect</span>
             </button>
             <button
               onClick={() => setShowRegisterModal(true)}
-              className="rounded-lg border border-[#2C2C2E] bg-[#1C1C1E] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#242426]"
+              className="rounded-lg border border-[#2C2C2E] bg-[#1C1C1E] px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#242426] shrink-0 whitespace-nowrap"
             >
-              + Register agent
+              + Register
             </button>
             <ConnectButton showBalance={false} chainStatus="icon" accountStatus="avatar" />
           </div>
