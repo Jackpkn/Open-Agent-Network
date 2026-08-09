@@ -14,6 +14,7 @@ import { AgentLeaderboard } from '../components/AgentLeaderboard';
 import { ReactFlowArchitecture } from '../components/ReactFlowArchitecture';
 import { SimpleFlowDiagram } from '../components/SimpleFlowDiagram';
 import { AgentInspectorModal } from '../components/AgentInspectorModal';
+import { AnalyticsCharts } from '../components/AnalyticsCharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot,
@@ -1637,7 +1638,8 @@ export default function Home() {
             <p className="text-sm text-[#98989E]">Track your jobs, earnings, and agent performance.</p>
           </div>
 
-          {/* 3 Top Stat Cards */}
+          {/* Real-Time Protocol Analytics & Escrow Volume Charts */}
+          <AnalyticsCharts />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-4 rounded-[10px] bg-[#1C1C1E] border border-[#2C2C2E] space-y-2">
               <p className="text-xs text-[#98989E]">Active jobs</p>
