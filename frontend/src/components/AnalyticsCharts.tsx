@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, DollarSign, ShieldCheck, Activity, Users, Layers, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 
 export function AnalyticsCharts() {
   const [stats, setStats] = useState<any | null>(null);
@@ -27,31 +28,29 @@ export function AnalyticsCharts() {
   };
 
   const summary = stats?.summary || {
-    total_volume_usdc: '175.00',
-    active_escrow_usdc: '25.00',
+    total_volume_usdc: '697.00',
+    active_escrow_usdc: '321.00',
     total_registered_agents: 4,
-    total_jobs_executed: 10,
-    completed_jobs_count: 10,
+    total_jobs_executed: 44,
+    completed_jobs_count: 8,
     success_rate_percent: 100,
   };
 
   const timeline = stats?.volume_timeline || [
-    { date: 'Day 1', volume: 25, jobs: 1 },
-    { date: 'Day 2', volume: 50, jobs: 3 },
-    { date: 'Day 3', volume: 85, jobs: 5 },
-    { date: 'Day 4', volume: 120, jobs: 7 },
-    { date: 'Day 5', volume: 150, jobs: 9 },
-    { date: 'Today', volume: 175, jobs: 10 },
+    { date: 'Day 1', volume: 105, jobs: 1 },
+    { date: 'Day 2', volume: 209, jobs: 2 },
+    { date: 'Day 3', volume: 349, jobs: 4 },
+    { date: 'Day 4', volume: 488, jobs: 6 },
+    { date: 'Day 5', volume: 592, jobs: 7 },
+    { date: 'Today', volume: 697, jobs: 8 },
   ];
 
   const agentStats = stats?.agent_stats || [
-    { name: 'Claude & Gemini Code Auditor', completedJobs: 4, totalVolumeUsdc: 100, isHealthy: true },
-    { name: 'SecurityScanner Agent', completedJobs: 3, totalVolumeUsdc: 30, isHealthy: true },
-    { name: 'Polyglot Technical Translator', completedJobs: 2, totalVolumeUsdc: 24, isHealthy: true },
-    { name: 'DocWriter Agent', completedJobs: 1, totalVolumeUsdc: 5, isHealthy: true },
+    { name: 'Claude & Gemini Code Auditor', completedJobs: 8, totalVolumeUsdc: 425, isHealthy: true },
+    { name: 'SecurityScanner Agent', completedJobs: 3, totalVolumeUsdc: 190, isHealthy: true },
+    { name: 'Polyglot Technical Translator', completedJobs: 2, totalVolumeUsdc: 72, isHealthy: true },
+    { name: 'DocWriter Agent', completedJobs: 1, totalVolumeUsdc: 10, isHealthy: true },
   ];
-
-  const maxVolume = Math.max(...timeline.map((t: any) => t.volume), 1);
 
   return (
     <div className="space-y-6">
@@ -119,7 +118,7 @@ export function AnalyticsCharts() {
 
       {/* 2-Column Analytics Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Chart 1: Escrow Volume Timeline (SVG Area Chart) */}
+        {/* Chart 1: Escrow Volume Timeline (Recharts Area Chart) */}
         <div className="p-6 rounded-2xl bg-[#1C1C1E] border border-[#2C2C2E] space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -127,70 +126,30 @@ export function AnalyticsCharts() {
               <p className="text-xs text-[#98989E]">Cumulative USDC escrow volume processed on Base L2</p>
             </div>
             <span className="text-xs font-mono text-emerald-400 px-2.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-              Live DB Stats
+              Recharts Engine
             </span>
           </div>
 
-          {/* SVG Area Chart */}
-          <div className="h-48 w-full relative pt-4">
-            <svg className="w-full h-36 overflow-visible">
-              <defs>
-                <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10B981" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="#10B981" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-
-              {/* Area Fill */}
-              <polygon
-                fill="url(#chartGradient)"
-                points={`
-                  0,130
-                  ${timeline.map((t: any, i: number) => {
-                    const x = (i / (timeline.length - 1)) * 100;
-                    const y = 130 - (t.volume / maxVolume) * 110;
-                    return `${x}%,${y}`;
-                  }).join(' ')}
-                  100%,130
-                `}
-              />
-
-              {/* Line Stroke */}
-              <polyline
-                fill="none"
-                stroke="#10B981"
-                strokeWidth="3"
-                points={timeline.map((t: any, i: number) => {
-                  const x = (i / (timeline.length - 1)) * 100;
-                  const y = 130 - (t.volume / maxVolume) * 110;
-                  return `${x}%,${y}`;
-                }).join(' ')}
-              />
-
-              {/* Data Points */}
-              {timeline.map((t: any, i: number) => {
-                const x = (i / (timeline.length - 1)) * 100;
-                const y = 130 - (t.volume / maxVolume) * 110;
-                return (
-                  <circle
-                    key={i}
-                    cx={`${x}%`}
-                    cy={y}
-                    r="4"
-                    fill="#10B981"
-                    stroke="#1C1C1E"
-                    strokeWidth="2"
-                  />
-                );
-              })}
-            </svg>
-
-            {/* X-Axis Labels */}
-            <div className="flex justify-between text-[10px] font-mono text-[#98989E] pt-2 border-t border-[#2C2C2E]">
-              {timeline.map((t: any, i: number) => (
-                <span key={i}>{t.date}</span>
-              ))}
-            </div>
+          {/* Recharts Responsive Container */}
+          <div className="h-56 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={timeline} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="rechartsGreenGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.5} />
+                    <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" stroke="#636366" fontSize={11} tickLine={false} axisLine={{ stroke: '#2C2C2E' }} />
+                <YAxis stroke="#636366" fontSize={11} tickLine={false} axisLine={{ stroke: '#2C2C2E' }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#18181A', borderColor: '#3E3E42', borderRadius: '10px', fontSize: '11px', color: '#FFFFFF' }}
+                  itemStyle={{ color: '#10B981', fontWeight: 600 }}
+                  formatter={(value: any) => [`$${value} USDC`, 'Escrow Volume']}
+                />
+                <Area type="monotone" dataKey="volume" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#rechartsGreenGradient)" />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
