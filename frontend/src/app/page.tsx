@@ -15,10 +15,12 @@ import { ReactFlowArchitecture } from '../components/ReactFlowArchitecture';
 import { SimpleFlowDiagram } from '../components/SimpleFlowDiagram';
 import { AgentInspectorModal } from '../components/AgentInspectorModal';
 import { AnalyticsCharts } from '../components/AnalyticsCharts';
+import { DisputeArbitrationModal } from '../components/DisputeArbitrationModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot,
   ShieldCheck,
+  ShieldAlert,
   Zap,
   DollarSign,
   Search,
@@ -225,6 +227,8 @@ export default function Home() {
   const [showHireModal, setShowHireModal] = useState<boolean>(false);
   const [showRegisterModal, setShowRegisterModal] = useState<boolean>(false);
   const [showInspectorModal, setShowInspectorModal] = useState<boolean>(false);
+  const [showDisputeModal, setShowDisputeModal] = useState<boolean>(false);
+  const [selectedDisputeJob, setSelectedDisputeJob] = useState<any | null>(null);
   const [userJobs, setUserJobs] = useState<ActiveJob[]>([]);
   const [isLoadingApi, setIsLoadingApi] = useState<boolean>(true);
 
@@ -1692,7 +1696,7 @@ export default function Home() {
                         <p className="text-xs text-[#98989E]">{job.workerName} • {job.createdAt}</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-3">
                       <span className="text-sm font-medium text-white">${job.amountUsdc}</span>
                       <span className={`px-2.5 py-1 rounded-md text-xs font-medium border ${job.status === 'COMPLETED'
                         ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
@@ -1700,6 +1704,17 @@ export default function Home() {
                         }`}>
                         {job.status === 'COMPLETED' ? 'Done' : 'In progress'}
                       </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDisputeJob(job);
+                          setShowDisputeModal(true);
+                        }}
+                        className="px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-colors flex items-center gap-1"
+                      >
+                        <ShieldAlert className="w-3 h-3" />
+                        <span>Dispute</span>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -1897,6 +1912,13 @@ export default function Home() {
       <AgentInspectorModal
         isOpen={showInspectorModal}
         onClose={() => setShowInspectorModal(false)}
+      />
+
+      {/* Dispute & Consensus Oracle Modal */}
+      <DisputeArbitrationModal
+        isOpen={showDisputeModal}
+        onClose={() => setShowDisputeModal(false)}
+        job={selectedDisputeJob}
       />
     </div>
   );
