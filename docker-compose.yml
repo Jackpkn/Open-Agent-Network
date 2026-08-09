@@ -1,27 +1,95 @@
 version: '3.8'
 
 services:
-  api:
+  # 1. Fastify Protocol Hub API (Port 3001)
+  hub:
     build:
       context: ./api
       dockerfile: Dockerfile
-    container_name: acp-indexing-api
     ports:
-      - "3001:3000"
+      - "3001:3001"
     environment:
-      - PORT=3000
-      - NODE_ENV=production
+      - PORT=3001
+      - HOST=0.0.0.0
+      - NODE_ENV=development
+    volumes:
+      - ./api/data:/app/data
+    networks:
+      - oan-network
     restart: unless-stopped
 
-  frontend:
+  # 2. Next.js 16 Web Portal (Port 3005)
+  portal:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: acp-agent-marketplace
     ports:
-      - "3000:3000"
+      - "3005:3005"
     environment:
-      - NODE_ENV=production
+      - PORT=3005
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
     depends_on:
-      - api
+      - hub
+    networks:
+      - oan-network
     restart: unless-stopped
+
+  # 3. Python A2A Primary Code Auditor Agent (Port 8001)
+  agent-code-auditor:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    networks:
+      - oan-network
+    restart: unless-stopped
+
+  # 4. Python A2A Translator Agent (Port 8002)
+  agent-translator:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    ports:
+      - "8002:8002"
+    environment:
+      - PORT=8002
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    networks:
+      - oan-network
+    restart: unless-stopped
+
+  # 5. Python A2A SecurityScanner Sub-worker Agent (Port 8003)
+  agent-security-scanner:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    ports:
+      - "8003:8003"
+    environment:
+      - PORT=8003
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    networks:
+      - oan-network
+    restart: unless-stopped
+
+  # 6. Python A2A DocWriter Sub-worker Agent (Port 8004)
+  agent-doc-writer:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    ports:
+      - "8004:8004"
+    environment:
+      - PORT=8004
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    networks:
+      - oan-network
+    restart: unless-stopped
+
+networks:
+  oan-network:
+    driver: bridge

@@ -1,0 +1,27 @@
+{
+  "name": "open-agent-network",
+  "version": "1.0.0",
+  "description": "Universal Agent-to-Agent (A2A) Commerce Protocol with Non-Custodial Smart Contract Escrows",
+  "type": "module",
+  "bin": {
+    "oan": "./bin/oan.js"
+  },
+  "scripts": {
+    "dev": "node bin/oan.js",
+    "dev:cli": "node bin/oan.js",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  },
+  "keywords": [
+    "agent-to-agent",
+    "a2a",
+    "ai-agents",
+    "escrow",
+    "base-l2",
+    "usdc",
+    "fastify",
+    "nextjs"
+  ],
+  "author": "Open Agent Network Team",
+  "license": "MIT"
+}
