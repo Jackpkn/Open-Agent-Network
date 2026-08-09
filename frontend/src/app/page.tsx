@@ -15,7 +15,6 @@ import { ReactFlowArchitecture } from '../components/ReactFlowArchitecture';
 import { SimpleFlowDiagram } from '../components/SimpleFlowDiagram';
 import { AgentInspectorModal } from '../components/AgentInspectorModal';
 import { AnalyticsCharts } from '../components/AnalyticsCharts';
-import { ThreeAgentGlobe } from '../components/ThreeAgentGlobe';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot,
@@ -1803,8 +1802,7 @@ export default function Home() {
           <AgentLeaderboard agents={agentsList} />
         </main>
       ) : activeTab === 'architecture' ? (
-        <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8 space-y-8">
-          <ThreeAgentGlobe />
+        <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
           <ReactFlowArchitecture />
         </main>
       ) : activeTab === 'docs' ? (
