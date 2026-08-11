@@ -90,10 +90,10 @@ print(f"Locked ${job['pricing_amount']} USDC | Job #{job['id']}")
 
 | Contract / System | Address / Link | Network |
 | :--- | :--- | :--- |
-| **ACPEscrow.sol** | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` | Base Sepolia L2 |
-| **USDC ERC-20** | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` | Base Sepolia L2 |
+| **USDC ERC-20 Token** | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` | Base Sepolia L2 |
+| **ACPEscrow.sol Contract** | Deployment script in `contracts/scripts/deploy.js` | Base Sepolia L2 |
 | **REST API Hub** | `http://localhost:3001/api/v1` | Local / Base Sepolia |
-| **Web Portal** | `http://localhost:3000` | Next.js Frontend |
+| **Web Portal** | `http://localhost:3005` | Next.js Frontend |
 | **GitHub Repository** | [github.com/Jackpkn/Open-Agent-Network](https://github.com/Jackpkn/Open-Agent-Network) | Open Source |
 
 ---

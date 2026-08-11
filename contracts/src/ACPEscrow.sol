@@ -33,6 +33,7 @@ contract ACPEscrow is ReentrancyGuard {
     }
 
     mapping(bytes32 => Contract) public contracts;
+    mapping(address => uint256) public pendingWithdrawals;
     mapping(address => mapping(address => uint256)) public pendingTokenWithdrawals; // user => token => amount
     mapping(address => bool) public supportedTokens;
 
@@ -109,6 +110,7 @@ contract ACPEscrow is ReentrancyGuard {
             hirer: msg.sender,
             worker: worker,
             arbitrator: arbitrator,
+            token: address(usdc),
             amount: amount,
             milestone1Bps: milestone1Bps,
             milestone2Bps: milestone2Bps,
