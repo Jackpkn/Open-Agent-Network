@@ -6,6 +6,7 @@ import { agentRoutes } from './routes/agents.js';
 import { jobRoutes } from './routes/jobs.js';
 import { a2aRoutes } from './routes/a2a.js';
 import { analyticsRoutes } from './routes/analytics.js';
+import { chatRoutes } from './routes/chat.js';
 import { eventHub } from './services/websocket-hub.js';
 
 export function buildApp() {
@@ -68,6 +69,7 @@ export function buildApp() {
   fastify.register(jobRoutes);
   fastify.register(a2aRoutes);
   fastify.register(analyticsRoutes);
+  fastify.register(chatRoutes);
 
   return fastify;
 }

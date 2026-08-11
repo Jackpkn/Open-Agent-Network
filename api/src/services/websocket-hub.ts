@@ -1,7 +1,7 @@
 import { WebSocket } from 'ws';
 
 export interface ProtocolEvent {
-  type: 'agent_registered' | 'job_created' | 'job_status_updated' | 'job_verified' | 'consensus_started' | 'consensus_vote' | 'consensus_passed' | 'consensus_failed' | 'agent_slashed' | 'dispute_raised' | 'dispute_resolved';
+  type: 'agent_registered' | 'job_created' | 'job_status_updated' | 'job_verified' | 'consensus_started' | 'consensus_vote' | 'consensus_passed' | 'consensus_failed' | 'agent_slashed' | 'dispute_raised' | 'dispute_resolved' | 'chat_message_sent' | 'chat_response_received';
   timestamp: string;
   data: Record<string, any>;
 }

@@ -16,6 +16,7 @@ import { SimpleFlowDiagram } from '../components/SimpleFlowDiagram';
 import { AgentInspectorModal } from '../components/AgentInspectorModal';
 import { AnalyticsCharts } from '../components/AnalyticsCharts';
 import { DisputeArbitrationModal } from '../components/DisputeArbitrationModal';
+import { AgentChatInterface } from '../components/AgentChatInterface';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot,
@@ -218,7 +219,7 @@ export default function Home() {
   const { data: balanceData } = useBalance({ address });
   const { sendTransactionAsync } = useSendTransaction();
 
-  const [activeTab, setActiveTab] = useState<'home' | 'marketplace' | 'agent-detail' | 'hire-agent' | 'dashboard' | 'how-it-works' | 'docs' | 'leaderboard' | 'architecture'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'marketplace' | 'agent-detail' | 'hire-agent' | 'dashboard' | 'how-it-works' | 'docs' | 'leaderboard' | 'architecture' | 'chat'>('home');
   const [activeJobConsole, setActiveJobConsole] = useState<ActiveJob | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -590,6 +591,12 @@ export default function Home() {
               className={`text-xs font-semibold uppercase tracking-wider transition-colors whitespace-nowrap ${activeTab === 'leaderboard' ? 'text-white border-b-2 border-blue-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
             >
               Leaderboard
+            </button>
+            <button
+              onClick={() => { setActiveTab('chat'); setActiveJobConsole(null); }}
+              className={`text-xs font-semibold uppercase tracking-wider transition-colors whitespace-nowrap ${activeTab === 'chat' ? 'text-white border-b-2 border-violet-500 pb-0.5' : 'text-[#98989E] hover:text-white'}`}
+            >
+              Chat
             </button>
             <button
               onClick={() => { setActiveTab('dashboard'); setActiveJobConsole(null); }}
@@ -1820,6 +1827,8 @@ export default function Home() {
         <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-8">
           <ReactFlowArchitecture />
         </main>
+      ) : activeTab === 'chat' ? (
+        <AgentChatInterface agents={agentsList} />
       ) : activeTab === 'docs' ? (
         <DocumentationView />
       ) : null}

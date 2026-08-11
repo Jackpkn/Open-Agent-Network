@@ -75,6 +75,27 @@ export interface Job {
   updated_at: string;
 }
 
+export interface ChatMessage {
+  id: number;
+  session_id: string;
+  agent_id: number;
+  role: 'user' | 'agent';
+  content: string;
+  job_id: string | null;
+  cost_usdc: string | null;
+  created_at: string;
+}
+
+export interface ChatSession {
+  session_id: string;
+  agent_id: number;
+  agent_name: string;
+  last_message: string;
+  message_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
 // ─── SQLite Store ──────────────────────────────────────────────────
 
 class DataStore {
@@ -122,6 +143,18 @@ class DataStore {
         dispute_winner TEXT,
         created_at TEXT DEFAULT (datetime('now')),
         updated_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (agent_id) REFERENCES agents(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT NOT NULL,
+        agent_id INTEGER NOT NULL,
+        role TEXT NOT NULL CHECK(role IN ('user', 'agent')),
+        content TEXT NOT NULL,
+        job_id TEXT,
+        cost_usdc TEXT,
+        created_at TEXT DEFAULT (datetime('now')),
         FOREIGN KEY (agent_id) REFERENCES agents(id)
       );
     `);
@@ -298,6 +331,90 @@ class DataStore {
       `UPDATE jobs SET status = ?, dispute_winner = ?, updated_at = datetime('now') WHERE id = ?`
     ).run(nextStatus, winner, id);
     return this.getJob(id);
+  }
+
+  // ─── Chat Messages ─────────────────────────────────────────────
+
+  createChatMessage(msg: {
+    session_id: string;
+    agent_id: number;
+    role: 'user' | 'agent';
+    content: string;
+    job_id?: string | null;
+    cost_usdc?: string | null;
+  }): ChatMessage {
+    const stmt = this.db.prepare(`
+      INSERT INTO chat_messages (session_id, agent_id, role, content, job_id, cost_usdc)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    const result = stmt.run(
+      msg.session_id,
+      msg.agent_id,
+      msg.role,
+      msg.content,
+      msg.job_id || null,
+      msg.cost_usdc || null
+    );
+    return {
+      id: result.lastInsertRowid as number,
+      session_id: msg.session_id,
+      agent_id: msg.agent_id,
+      role: msg.role,
+      content: msg.content,
+      job_id: msg.job_id || null,
+      cost_usdc: msg.cost_usdc || null,
+      created_at: new Date().toISOString(),
+    };
+  }
+
+  getChatHistory(sessionId: string): ChatMessage[] {
+    const rows = this.db.prepare(
+      `SELECT * FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC`
+    ).all(sessionId) as any[];
+    return rows.map((r) => ({
+      id: r.id,
+      session_id: r.session_id,
+      agent_id: r.agent_id,
+      role: r.role,
+      content: r.content,
+      job_id: r.job_id,
+      cost_usdc: r.cost_usdc,
+      created_at: r.created_at,
+    }));
+  }
+
+  getChatSessions(agentId?: number): ChatSession[] {
+    let query = `
+      SELECT
+        session_id,
+        agent_id,
+        COUNT(*) as message_count,
+        MAX(content) as last_message,
+        MIN(created_at) as created_at,
+        MAX(created_at) as updated_at
+      FROM chat_messages
+    `;
+    if (agentId) {
+      query += ` WHERE agent_id = ?`;
+    }
+    query += ` GROUP BY session_id ORDER BY MAX(created_at) DESC`;
+
+    const rows = agentId
+      ? (this.db.prepare(query).all(agentId) as any[])
+      : (this.db.prepare(query).all() as any[]);
+
+    return rows.map((r) => {
+      const agent = this.getAgent(r.agent_id);
+      return {
+        session_id: r.session_id,
+        agent_id: r.agent_id,
+        agent_name: agent?.agent_card?.name || `Agent #${r.agent_id}`,
+        last_message: r.last_message || '',
+        message_count: r.message_count,
+        created_at: r.created_at,
+        updated_at: r.updated_at,
+      };
+    });
   }
 
   // ─── Private helpers ───────────────────────────────────────────

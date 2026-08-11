@@ -246,7 +246,6 @@ body {
   background-size: 32px 32px;
 }
 
-/* Force React Flow elements to ignore mouse wheel events for butter-smooth 60/120 FPS page scrolling */
 .react-flow,
 .react-flow *,
 .react-flow__renderer,
@@ -255,3 +254,161 @@ body {
   pointer-events: none !important;
 }
 
+/* ─── Agent Chat Interface Animations ─────────────────────────────── */
+
+@keyframes typingDots {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes streamFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.chat-message-enter {
+  animation: messageSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.chat-stream-token {
+  animation: streamFade 0.15s ease-in forwards;
+}
+
+.typing-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #636366;
+  animation: typingDots 1.2s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* Custom thin scrollbar for chat */
+.chat-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: #2C2C2E;
+  border-radius: 8px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #3E3E42;
+}
+
+/* Markdown content styles for agent responses */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+  color: #FFFFFF;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.markdown-content h2 { font-size: 16px; }
+.markdown-content h3 { font-size: 14px; }
+
+.markdown-content p {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 20px;
+  margin-bottom: 8px;
+}
+
+.markdown-content li {
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+.markdown-content code {
+  background: #18181A;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: #93C5FD;
+}
+
+.markdown-content pre {
+  background: #0D0D0F;
+  border: 1px solid #2C2C2E;
+  border-radius: 8px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  margin: 8px 0 12px;
+}
+
+.markdown-content pre code {
+  background: transparent;
+  padding: 0;
+  color: #E4E4E7;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.markdown-content strong {
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.markdown-content em {
+  color: #98989E;
+}
+
+.markdown-content blockquote {
+  border-left: 3px solid #2563EB;
+  padding-left: 12px;
+  margin: 8px 0;
+  color: #98989E;
+}
+
+.chat-active-gradient {
+  background: linear-gradient(135deg, #1E293B 0%, #1C1C1E 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 4s ease infinite;
+}
