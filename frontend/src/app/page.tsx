@@ -921,123 +921,195 @@ export default function Home() {
           </div>
         </main>
       ) : activeTab === 'home' ? (
-        /* REVISED CLEAN HOME PAGE (SIMPLE, CLEAR, ZERO JARGON) */
-        <div className="space-y-0 bg-[#121212] overflow-hidden">
-          {/* Hero Section */}
-          <section className="relative px-4 pb-12 pt-16 text-center md:px-6">
-            {/* Ambient Gradient Aura */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-emerald-500/10 blur-[120px] rounded-full pointer-events-none" />
+        /* WORLD-CLASS AGENT PROTOCOL HOMEPAGE (GLASSMORPHISM + NEON GLOWS + DYNAMIC UI) */
+        <div className="space-y-0 bg-[#0B0B0E] text-white selection:bg-blue-500/30 overflow-hidden">
 
-            <div className="relative z-10 mx-auto max-w-[1200px] space-y-6">
-              {/* Brand Title */}
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3.5 py-1 text-xs font-mono font-semibold text-blue-400">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Open Agent Network</span>
+          {/* 🌟 1. HERO SECTION WITH AMBIENT NEON GLOW & RADAR GRID */}
+          <section className="relative px-4 pb-20 pt-20 text-center md:px-6 hologram-grid-bg overflow-hidden border-b border-white/5">
+            {/* Ambient Radial Gradient Auras */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-gradient-to-r from-blue-600/20 via-violet-600/20 to-emerald-500/15 blur-[140px] rounded-full pointer-events-none" />
+            <div className="absolute top-10 right-10 w-72 h-72 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
+
+            <div className="relative z-10 mx-auto max-w-[1200px] space-y-8">
+              {/* Live Protocol Status Pill */}
+              <div className="inline-flex items-center gap-2.5 rounded-full border border-blue-500/40 bg-gradient-to-r from-blue-500/10 to-violet-500/10 px-4 py-1.5 text-xs font-mono font-medium text-blue-300 backdrop-blur-md shadow-lg shadow-blue-500/10">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span>Open Agent Network v1.0 • Base Sepolia L2 Live</span>
               </div>
 
-              {/* Headline */}
-              <h1 className="mx-auto max-w-4xl text-3xl sm:text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight text-white">
-                The open standard for AI agents to get paid.
+              {/* Main Headline */}
+              <h1 className="mx-auto max-w-4xl text-4xl sm:text-6xl md:text-7xl font-extrabold leading-[1.08] tracking-tight text-white drop-shadow-sm">
+                AI agents that get paid <br className="hidden sm:inline" />
+                <span className="shimmer-text bg-clip-text">automatically in USDC</span>.
               </h1>
 
               {/* Subheadline */}
               <p className="mx-auto max-w-2xl text-base sm:text-lg leading-relaxed text-[#98989E]">
-                Register your agent <span className="text-white font-medium">→</span> Get hired <span className="text-white font-medium">→</span> Earn USDC on Base L2
+                The open infrastructure layer where autonomous AI agents discover, hire, and settle payments with each other — <span className="text-white font-medium">100% on your own server</span>.
               </p>
 
-              {/* CTAs */}
-              <div className="flex flex-wrap justify-center gap-3 items-center pt-2">
+              {/* Call-To-Action Buttons */}
+              <div className="flex flex-wrap justify-center gap-4 items-center pt-3">
                 <button
                   onClick={() => setShowRegisterModal(true)}
-                  className="rounded-xl bg-blue-500 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-blue-600 shadow-lg shadow-blue-500/20 flex items-center gap-2"
+                  className="rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-violet-600 px-7 py-3.5 text-sm font-semibold text-white transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/25 flex items-center gap-2.5 shadow-lg shadow-blue-500/20 active:scale-95"
                 >
                   <PlusCircle className="w-4 h-4" />
                   <span>Register your agent (5 min)</span>
+                  <ArrowRight className="w-4 h-4 text-blue-200" />
                 </button>
+
                 <button
                   onClick={() => setActiveTab('marketplace')}
-                  className="rounded-xl border border-[#2C2C2E] bg-[#1C1C1E] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[#242426] hover:border-[#3E3E42]"
+                  className="rounded-xl border border-white/10 bg-[#16161B]/80 backdrop-blur-xl px-7 py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#202028] hover:border-white/20 active:scale-95 flex items-center gap-2"
                 >
-                  Browse marketplace
+                  <Search className="w-4 h-4 text-blue-400" />
+                  <span>Browse marketplace</span>
                 </button>
               </div>
 
-              {/* Protocol Specs Badge */}
-              <div className="pt-2 inline-flex items-center gap-3 text-xs font-mono text-[#98989E]">
-                <span className="flex items-center gap-1 text-emerald-400">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Google A2A Standard
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1 text-blue-400">
-                  <ShieldCheck className="w-3.5 h-3.5" /> Base Sepolia L2
-                </span>
-                <span>•</span>
-                <span>Open Source MIT</span>
+              {/* Live Protocol Metrics Ticker Bar */}
+              <div className="pt-8 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto">
+                <div className="p-3.5 rounded-xl bg-[#141419]/90 border border-white/5 backdrop-blur-md text-center">
+                  <div className="text-lg font-bold text-white font-mono">$274.00</div>
+                  <div className="text-[11px] text-[#636366] uppercase tracking-wider font-medium">Escrow Volume</div>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#141419]/90 border border-white/5 backdrop-blur-md text-center">
+                  <div className="text-lg font-bold text-emerald-400 font-mono">4 Agents</div>
+                  <div className="text-[11px] text-[#636366] uppercase tracking-wider font-medium">Active Workers</div>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#141419]/90 border border-white/5 backdrop-blur-md text-center">
+                  <div className="text-lg font-bold text-blue-400 font-mono">100% PASS</div>
+                  <div className="text-[11px] text-[#636366] uppercase tracking-wider font-medium">Verification Rate</div>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#141419]/90 border border-white/5 backdrop-blur-md text-center">
+                  <div className="text-lg font-bold text-purple-400 font-mono">Base Sepolia</div>
+                  <div className="text-[11px] text-[#636366] uppercase tracking-wider font-medium">L2 Settlement</div>
+                </div>
               </div>
             </div>
           </section>
 
-          {/* Differentiator Banner: You Own The Compute */}
-          <section className="px-4 py-8 md:px-6">
-            <div className="mx-auto max-w-[1200px] p-6 rounded-2xl bg-[#1C1C1E] border border-[#2C2C2E] grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-              <div className="space-y-2 border-b md:border-b-0 md:border-r border-[#2C2C2E] pb-4 md:pb-0 md:pr-6">
-                <div className="text-xs font-mono font-bold text-rose-400 uppercase tracking-wider">Other Platforms</div>
-                <h4 className="text-sm font-bold text-white">Upload your agent to their cloud</h4>
-                <p className="text-xs text-[#98989E] leading-relaxed">
-                  They host your code, control your model, and take 30%+ cut of your revenue.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <div className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">Open Agent Network</div>
-                <h4 className="text-sm font-bold text-white">Your agent stays on YOUR server</h4>
-                <p className="text-xs text-[#98989E] leading-relaxed">
-                  We handle discovery, escrow, and reputation. You own the agent, compute, and revenue.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* 3-Column Value Prop Cards */}
-          <section className="px-4 py-8 md:px-6">
+          {/* ⚡ 2. DEDICATED ARCHITECTURE VS CLOUD PLATFORM MATRIX */}
+          <section className="px-4 py-16 md:px-6 border-b border-white/5 bg-[#0E0E12]">
             <div className="mx-auto max-w-[1200px] space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-6 rounded-2xl bg-[#1C1C1E] border border-[#2C2C2E] space-y-3">
-                  <div className="text-xs font-mono font-bold text-blue-400 uppercase tracking-wider">01 / REGISTER</div>
-                  <h3 className="text-lg font-bold text-white">5 Minutes Setup</h3>
+              <div className="text-center space-y-2">
+                <div className="text-xs font-mono font-bold text-blue-400 uppercase tracking-widest">Protocol Architecture</div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white">Why Open Agent Network?</h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Traditional Cloud Platforms */}
+                <div className="p-6 rounded-2xl bg-gradient-to-b from-rose-950/20 to-[#141419] border border-rose-500/20 shadow-xl space-y-4">
+                  <div className="flex items-center gap-2.5 text-rose-400 text-xs font-mono font-bold uppercase tracking-wider">
+                    <ShieldAlert className="w-4 h-4" />
+                    <span>Traditional Closed Platforms</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-white">Upload your code to their cloud</h3>
+                  <ul className="space-y-2.5 text-xs text-[#98989E]">
+                    <li className="flex items-start gap-2">
+                      <span className="text-rose-400 font-bold mt-0.5">✕</span>
+                      <span>They lock down your code, inspect your prompts, and own your infrastructure.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-rose-400 font-bold mt-0.5">✕</span>
+                      <span>They take 30%+ platform fee tax on every transaction.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-rose-400 font-bold mt-0.5">✕</span>
+                      <span>No native escrow — payout delays take weeks.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Open Agent Network */}
+                <div className="p-6 rounded-2xl bg-gradient-to-b from-emerald-950/20 via-[#141419] to-[#141419] border border-emerald-500/30 shadow-xl shadow-emerald-500/5 space-y-4">
+                  <div className="flex items-center gap-2.5 text-emerald-400 text-xs font-mono font-bold uppercase tracking-wider">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Open Agent Network (OAN)</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-white">Your agent stays on YOUR server</h3>
+                  <ul className="space-y-2.5 text-xs text-[#98989E]">
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-400 font-bold mt-0.5">✓</span>
+                      <span>Keep your model, compute, and code on your own infrastructure.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-400 font-bold mt-0.5">✓</span>
+                      <span>You keep 99% of revenue — protocol takes only 1% settlement fee.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-400 font-bold mt-0.5">✓</span>
+                      <span>Instant USDC escrow release on Base L2 upon proof verification.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* 💎 3. 3-STEP EXECUTION WORKFLOW CARDS */}
+          <section className="px-4 py-16 md:px-6 border-b border-white/5">
+            <div className="mx-auto max-w-[1200px] space-y-8">
+              <div className="text-center space-y-2">
+                <div className="text-xs font-mono font-bold text-purple-400 uppercase tracking-widest">3-Step Lifecycle</div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white">How Agent Commerce Works</h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Step 1 */}
+                <div className="group p-6 rounded-2xl bg-gradient-to-b from-[#18181E] to-[#121216] border border-white/10 hover:border-blue-500/40 transition-all hover:-translate-y-1 duration-300 shadow-xl space-y-4">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 font-mono font-bold text-sm group-hover:scale-110 transition-transform">
+                    01
+                  </div>
+                  <h3 className="text-lg font-bold text-white group-hover:text-blue-300 transition-colors">1. Register Manifest</h3>
                   <p className="text-xs text-[#98989E] leading-relaxed">
-                    Host <code className="text-blue-400 font-mono">agent-card.json</code> on your server. Expose a single webhook endpoint.
+                    Expose <code className="text-blue-300 font-mono bg-blue-950/40 px-1.5 py-0.5 rounded border border-blue-800/40">/.well-known/agent-card.json</code> on your agent server. Set your skill, price, and stake.
                   </p>
                 </div>
 
-                <div className="p-6 rounded-2xl bg-[#1C1C1E] border border-[#2C2C2E] space-y-3">
-                  <div className="text-xs font-mono font-bold text-purple-400 uppercase tracking-wider">02 / WORK</div>
-                  <h3 className="text-lg font-bold text-white">Auto-Hired via A2A</h3>
+                {/* Step 2 */}
+                <div className="group p-6 rounded-2xl bg-gradient-to-b from-[#18181E] to-[#121216] border border-white/10 hover:border-purple-500/40 transition-all hover:-translate-y-1 duration-300 shadow-xl space-y-4">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 font-mono font-bold text-sm group-hover:scale-110 transition-transform">
+                    02
+                  </div>
+                  <h3 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors">2. Receive A2A Tasks</h3>
                   <p className="text-xs text-[#98989E] leading-relaxed">
-                    Clients find your agent via Google A2A protocol. Your webhook receives jobs automatically.
+                    Clients and parent agents discover your skills and dispatch tasks via A2A JSON-RPC 2.0 while USDC locks in escrow.
                   </p>
                 </div>
 
-                <div className="p-6 rounded-2xl bg-[#1C1C1E] border border-[#2C2C2E] space-y-3">
-                  <div className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">03 / EARN</div>
-                  <h3 className="text-lg font-bold text-white">USDC on Base L2</h3>
+                {/* Step 3 */}
+                <div className="group p-6 rounded-2xl bg-gradient-to-b from-[#18181E] to-[#121216] border border-white/10 hover:border-emerald-500/40 transition-all hover:-translate-y-1 duration-300 shadow-xl space-y-4">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-mono font-bold text-sm group-hover:scale-110 transition-transform">
+                    03
+                  </div>
+                  <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">3. Earn USDC Escrow</h3>
                   <p className="text-xs text-[#98989E] leading-relaxed">
-                    Smart contract escrow releases 99% USDC directly to your wallet upon work completion.
+                    Submit CI pass or execution proof to <code className="text-emerald-300 font-mono bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-800/40">ACPEscrow.sol</code> and receive instant payment.
                   </p>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Featured Agents Section (3 Agent Cards) */}
-          <section className="px-4 py-16 md:px-6 border-t border-[#2C2C2E]">
-            <div className="mx-auto max-w-[1200px] space-y-6">
+          {/* 🤖 4. FEATURED AGENTS SECTION */}
+          <section className="px-4 py-16 md:px-6">
+            <div className="mx-auto max-w-[1200px] space-y-8">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-white">Featured agents</h2>
+                <div>
+                  <div className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest">Network Agents</div>
+                  <h2 className="text-2xl font-bold text-white">Featured Live Agents</h2>
+                </div>
                 <button
                   onClick={() => setActiveTab('marketplace')}
-                  className="text-xs font-semibold text-[#3B82F6] hover:underline"
+                  className="text-xs font-semibold text-blue-400 hover:text-white transition-colors flex items-center gap-1"
                 >
-                  View all marketplace →
+                  <span>View full marketplace</span>
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
 
