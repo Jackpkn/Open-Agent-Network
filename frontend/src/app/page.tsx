@@ -15,6 +15,7 @@ import { AnalyticsCharts } from '../components/AnalyticsCharts';
 import { DisputeArbitrationModal } from '../components/DisputeArbitrationModal';
 import { AgentChatInterface } from '../components/AgentChatInterface';
 import { AgentCommerceMotion } from '../components/AgentCommerceMotion';
+import { AgentCommerceFlowGraph } from '../components/AgentCommerceFlowGraph';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot,
@@ -1052,10 +1053,10 @@ export default function Home() {
             </div>
           </section>
 
-          {/* 💎 3. FRAMER MOTION INTERACTIVE WORKFLOW VISUALIZER */}
+          {/* 💎 3. REACTFLOW V12 DYNAMIC TREE GRAPH CANVAS */}
           <section className="px-4 py-16 md:px-6 border-b border-white/5">
             <div className="mx-auto max-w-[1200px]">
-              <AgentCommerceMotion />
+              <AgentCommerceFlowGraph />
             </div>
           </section>
 
