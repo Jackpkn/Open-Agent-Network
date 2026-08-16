@@ -14,6 +14,7 @@ import { AgentInspectorModal } from '../components/AgentInspectorModal';
 import { AnalyticsCharts } from '../components/AnalyticsCharts';
 import { DisputeArbitrationModal } from '../components/DisputeArbitrationModal';
 import { AgentChatInterface } from '../components/AgentChatInterface';
+import { AgentCommerceMotion } from '../components/AgentCommerceMotion';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot,
@@ -1051,48 +1052,10 @@ export default function Home() {
             </div>
           </section>
 
-          {/* 💎 3. 3-STEP EXECUTION WORKFLOW CARDS */}
+          {/* 💎 3. FRAMER MOTION INTERACTIVE WORKFLOW VISUALIZER */}
           <section className="px-4 py-16 md:px-6 border-b border-white/5">
-            <div className="mx-auto max-w-[1200px] space-y-8">
-              <div className="text-center space-y-2">
-                <div className="text-xs font-mono font-bold text-purple-400 uppercase tracking-widest">3-Step Lifecycle</div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-white">How Agent Commerce Works</h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Step 1 */}
-                <div className="group p-6 rounded-2xl bg-gradient-to-b from-[#18181E] to-[#121216] border border-white/10 hover:border-blue-500/40 transition-all hover:-translate-y-1 duration-300 shadow-xl space-y-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 font-mono font-bold text-sm group-hover:scale-110 transition-transform">
-                    01
-                  </div>
-                  <h3 className="text-lg font-bold text-white group-hover:text-blue-300 transition-colors">1. Register Manifest</h3>
-                  <p className="text-xs text-[#98989E] leading-relaxed">
-                    Expose <code className="text-blue-300 font-mono bg-blue-950/40 px-1.5 py-0.5 rounded border border-blue-800/40">/.well-known/agent-card.json</code> on your agent server. Set your skill, price, and stake.
-                  </p>
-                </div>
-
-                {/* Step 2 */}
-                <div className="group p-6 rounded-2xl bg-gradient-to-b from-[#18181E] to-[#121216] border border-white/10 hover:border-purple-500/40 transition-all hover:-translate-y-1 duration-300 shadow-xl space-y-4">
-                  <div className="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 font-mono font-bold text-sm group-hover:scale-110 transition-transform">
-                    02
-                  </div>
-                  <h3 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors">2. Receive A2A Tasks</h3>
-                  <p className="text-xs text-[#98989E] leading-relaxed">
-                    Clients and parent agents discover your skills and dispatch tasks via A2A JSON-RPC 2.0 while USDC locks in escrow.
-                  </p>
-                </div>
-
-                {/* Step 3 */}
-                <div className="group p-6 rounded-2xl bg-gradient-to-b from-[#18181E] to-[#121216] border border-white/10 hover:border-emerald-500/40 transition-all hover:-translate-y-1 duration-300 shadow-xl space-y-4">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-mono font-bold text-sm group-hover:scale-110 transition-transform">
-                    03
-                  </div>
-                  <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">3. Earn USDC Escrow</h3>
-                  <p className="text-xs text-[#98989E] leading-relaxed">
-                    Submit CI pass or execution proof to <code className="text-emerald-300 font-mono bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-800/40">ACPEscrow.sol</code> and receive instant payment.
-                  </p>
-                </div>
-              </div>
+            <div className="mx-auto max-w-[1200px]">
+              <AgentCommerceMotion />
             </div>
           </section>
 
