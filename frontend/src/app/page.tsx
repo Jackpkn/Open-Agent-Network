@@ -22,16 +22,12 @@ import {
   ShieldCheck,
   ShieldAlert,
   Zap,
-  DollarSign,
   Search,
   PlusCircle,
   Sparkles,
   Code2,
-  TrendingUp,
   FileText,
-  Microscope,
-  CheckCircle2,
-  ExternalLink,
+
   Lock,
   ArrowRight,
   ChevronRight,
@@ -39,20 +35,11 @@ import {
   Terminal,
   Activity,
   Check,
-  Clock,
+
   FileCode,
-  SlidersHorizontal,
-  Coins,
-  Cpu,
-  Eye,
-  CheckSquare,
-  RefreshCw,
+
   Radio,
-  Star,
-  Play,
-  Shield,
-  Award,
-  Menu,
+
 } from 'lucide-react';
 
 interface Agent {
@@ -361,10 +348,10 @@ export default function Home() {
       agent.skillId === 'translation'
         ? 'Translate the technical documentation from English into Spanish, Japanese, and German.'
         : agent.skillId === 'security-scan'
-        ? 'Scan AST for reentrancy flaws, SQL injection, and hardcoded secrets.'
-        : agent.skillId === 'doc-generation'
-        ? 'Generate OpenAPI 3.0 specs and Markdown endpoint documentation.'
-        : 'Audit code for performance and security flaws.';
+          ? 'Scan AST for reentrancy flaws, SQL injection, and hardcoded secrets.'
+          : agent.skillId === 'doc-generation'
+            ? 'Generate OpenAPI 3.0 specs and Markdown endpoint documentation.'
+            : 'Audit code for performance and security flaws.';
     setTaskDescription(defaultPrompt);
     setActiveTab('hire-agent');
   };
@@ -504,7 +491,7 @@ export default function Home() {
               setLiveSseLogs((prev) => [...prev, `🎉 Majority Consensus Reached (${cData.approvals}/${cData.totalVotes} Votes)! Escrow Released.`]);
             }
           }
-        } catch (e) {}
+        } catch (e) { }
       } else {
         setLiveSseLogs((prev) => [...prev, '🎉 Task Completed! Escrow verification passed.']);
       }
@@ -1330,19 +1317,19 @@ export default function Home() {
                           agent.skillId === 'translation'
                             ? 'Translate technical docs into Spanish...'
                             : agent.skillId === 'security-scan'
-                            ? 'Scan AST for reentrancy flaws...'
-                            : agent.skillId === 'doc-generation'
-                            ? 'Generate OpenAPI specs for payment API...'
-                            : 'Review Python API for security vulnerabilities...'
+                              ? 'Scan AST for reentrancy flaws...'
+                              : agent.skillId === 'doc-generation'
+                                ? 'Generate OpenAPI specs for payment API...'
+                                : 'Review Python API for security vulnerabilities...'
                         }
                         defaultValue={
                           agent.skillId === 'translation'
                             ? 'Translate technical docs into Spanish...'
                             : agent.skillId === 'security-scan'
-                            ? 'Scan AST for reentrancy flaws...'
-                            : agent.skillId === 'doc-generation'
-                            ? 'Generate OpenAPI specs for payment API...'
-                            : 'Review Python API for security vulnerabilities...'
+                              ? 'Scan AST for reentrancy flaws...'
+                              : agent.skillId === 'doc-generation'
+                                ? 'Generate OpenAPI specs for payment API...'
+                                : 'Review Python API for security vulnerabilities...'
                         }
                         id={`prompt-input-${agent.id}`}
                         className="flex-1 h-8 px-3 rounded-lg bg-[#121212] border border-[#2C2C2E] text-xs font-medium text-white placeholder-[#636366] focus:outline-none focus:border-blue-500 transition-colors"
@@ -1483,10 +1470,10 @@ export default function Home() {
                     currentAgent.skillId === 'translation'
                       ? 'Translate technical specification into Spanish maintaining markdown formatting.'
                       : currentAgent.skillId === 'security-scan'
-                      ? 'Scan Python database route AST for SQL injection vulnerabilities.'
-                      : currentAgent.skillId === 'doc-generation'
-                      ? 'Generate OpenAPI 3.0 markdown documentation for payment route.'
-                      : 'Review Python API for security vulnerabilities and optimize database query performance.'
+                        ? 'Scan Python database route AST for SQL injection vulnerabilities.'
+                        : currentAgent.skillId === 'doc-generation'
+                          ? 'Generate OpenAPI 3.0 markdown documentation for payment route.'
+                          : 'Review Python API for security vulnerabilities and optimize database query performance.'
                   }
                   className="w-full p-3.5 rounded-xl bg-[#121212] border border-[#2C2C2E] text-xs font-mono text-white placeholder-[#636366] focus:outline-none focus:border-blue-500 transition-all leading-relaxed"
                 />
@@ -1765,7 +1752,7 @@ export default function Home() {
           {/* Header Banner with Ambient Radial Glow */}
           <div className="relative p-8 rounded-2xl bg-[#1C1C1E] border border-[#2C2C2E] overflow-hidden">
             <div className="absolute -right-20 -top-20 w-80 h-80 bg-gradient-to-br from-blue-500/15 via-purple-500/15 to-emerald-500/15 blur-[100px] rounded-full pointer-events-none" />
-            
+
             <div className="relative z-10 space-y-2 max-w-2xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#2C2C2E] bg-[#121212]/80 px-3.5 py-1 backdrop-blur-md">
                 <span className="relative flex h-2 w-2">
@@ -1911,13 +1898,12 @@ export default function Home() {
               </div>
 
               {regStatusMsg && (
-                <div className={`p-3 rounded-lg border text-xs font-mono transition-all ${
-                  regStatusMsg.includes('✅')
-                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                    : regStatusMsg.includes('❌')
+                <div className={`p-3 rounded-lg border text-xs font-mono transition-all ${regStatusMsg.includes('✅')
+                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                  : regStatusMsg.includes('❌')
                     ? 'bg-rose-500/10 border-rose-500/20 text-rose-400'
                     : 'bg-blue-500/10 border-blue-500/20 text-blue-400 animate-pulse'
-                }`}>
+                  }`}>
                   {regStatusMsg}
                 </div>
               )}

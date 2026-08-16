@@ -143,23 +143,21 @@ export function AgentCommerceMotion() {
               whileHover={{ y: -4, scale: 1.015 }}
               whileTap={{ scale: 0.98 }}
               transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-              className={`relative z-10 text-left p-6 rounded-2xl border backdrop-blur-xl transition-all duration-300 ${
-                isActive
+              className={`relative z-10 text-left p-6 rounded-2xl border backdrop-blur-xl transition-all duration-300 ${isActive
                   ? isBlue
                     ? 'bg-gradient-to-b from-blue-950/40 via-[#16161E] to-[#121216] border-blue-500/60 shadow-xl shadow-blue-500/10'
                     : isPurple
-                    ? 'bg-gradient-to-b from-purple-950/40 via-[#16161E] to-[#121216] border-purple-500/60 shadow-xl shadow-purple-500/10'
-                    : 'bg-gradient-to-b from-emerald-950/40 via-[#16161E] to-[#121216] border-emerald-500/60 shadow-xl shadow-emerald-500/10'
+                      ? 'bg-gradient-to-b from-purple-950/40 via-[#16161E] to-[#121216] border-purple-500/60 shadow-xl shadow-purple-500/10'
+                      : 'bg-gradient-to-b from-emerald-950/40 via-[#16161E] to-[#121216] border-emerald-500/60 shadow-xl shadow-emerald-500/10'
                   : 'bg-[#141419]/90 border-white/10 hover:border-white/20'
-              }`}
+                }`}
             >
               {/* Active Layout Glow Indicator */}
               {isActive && (
                 <motion.div
                   layoutId="activeStepGlow"
-                  className={`absolute -inset-[1px] rounded-2xl blur-sm pointer-events-none opacity-50 ${
-                    isBlue ? 'bg-blue-500' : isPurple ? 'bg-purple-500' : 'bg-emerald-500'
-                  }`}
+                  className={`absolute -inset-[1px] rounded-2xl blur-sm pointer-events-none opacity-50 ${isBlue ? 'bg-blue-500' : isPurple ? 'bg-purple-500' : 'bg-emerald-500'
+                    }`}
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 />
               )}
@@ -167,24 +165,22 @@ export function AgentCommerceMotion() {
               <div className="relative z-10 space-y-3">
                 <div className="flex items-center justify-between">
                   <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center font-mono font-bold text-xs border ${
-                      isBlue
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center font-mono font-bold text-xs border ${isBlue
                         ? 'bg-blue-500/20 text-blue-400 border-blue-500/40'
                         : isPurple
-                        ? 'bg-purple-500/20 text-purple-400 border-purple-500/40'
-                        : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                    }`}
+                          ? 'bg-purple-500/20 text-purple-400 border-purple-500/40'
+                          : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                      }`}
                   >
                     {step.number}
                   </div>
                   <span
-                    className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border ${
-                      isBlue
+                    className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border ${isBlue
                         ? 'bg-blue-500/10 text-blue-300 border-blue-500/30'
                         : isPurple
-                        ? 'bg-purple-500/10 text-purple-300 border-purple-500/30'
-                        : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
-                    }`}
+                          ? 'bg-purple-500/10 text-purple-300 border-purple-500/30'
+                          : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                      }`}
                   >
                     {step.badge}
                   </span>
@@ -217,13 +213,12 @@ export function AgentCommerceMotion() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -12, scale: 0.99 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className={`rounded-2xl border backdrop-blur-2xl overflow-hidden shadow-2xl ${
-            currentStep.color === 'blue'
+          className={`rounded-2xl border backdrop-blur-2xl overflow-hidden shadow-2xl ${currentStep.color === 'blue'
               ? 'bg-[#0E121E]/90 border-blue-500/30'
               : currentStep.color === 'purple'
-              ? 'bg-[#150E1E]/90 border-purple-500/30'
-              : 'bg-[#0E1E17]/90 border-emerald-500/30'
-          }`}
+                ? 'bg-[#150E1E]/90 border-purple-500/30'
+                : 'bg-[#0E1E17]/90 border-emerald-500/30'
+            }`}
         >
           {/* Header Bar */}
           <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 bg-black/40">
@@ -261,13 +256,12 @@ export function AgentCommerceMotion() {
           <div className="p-5 grid grid-cols-1 lg:grid-cols-5 gap-6 items-center">
             <div className="lg:col-span-2 space-y-3">
               <div
-                className={`inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider ${
-                  currentStep.color === 'blue'
+                className={`inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider ${currentStep.color === 'blue'
                     ? 'text-blue-400'
                     : currentStep.color === 'purple'
-                    ? 'text-purple-400'
-                    : 'text-emerald-400'
-                }`}
+                      ? 'text-purple-400'
+                      : 'text-emerald-400'
+                  }`}
               >
                 <Zap className="w-3.5 h-3.5" />
                 <span>{currentStep.badge}</span>
