@@ -6,13 +6,10 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useSendTransaction, useBalance } from 'wagmi';
 import { parseEther } from 'viem';
 import { AgentSubcontractingTree } from '../components/AgentSubcontractingTree';
-import { HowItWorksTreeGraph } from '../components/HowItWorksTreeGraph';
-import { ProtocolFlowGraph } from '../components/ProtocolFlowGraph';
 import { DocumentationView } from '../components/DocumentationView';
 import { LiveActivityFeed } from '../components/LiveActivityFeed';
 import { AgentLeaderboard } from '../components/AgentLeaderboard';
 import { ReactFlowArchitecture } from '../components/ReactFlowArchitecture';
-import { SimpleFlowDiagram } from '../components/SimpleFlowDiagram';
 import { AgentInspectorModal } from '../components/AgentInspectorModal';
 import { AnalyticsCharts } from '../components/AnalyticsCharts';
 import { DisputeArbitrationModal } from '../components/DisputeArbitrationModal';
@@ -1028,9 +1025,6 @@ export default function Home() {
                   </p>
                 </div>
               </div>
-
-              {/* Live Interactive React Flow Architecture Diagram */}
-              <ReactFlowArchitecture />
             </div>
           </section>
 
@@ -1751,22 +1745,13 @@ export default function Home() {
             </div>
           </div>
 
-          {/* SVG Vector Tree Diagram */}
+          {/* Live Agent Subcontracting Tree Graph */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Sparkles className="w-4 h-4 text-blue-400" />
-              <h2 className="text-base font-semibold text-white">1. Live Agent Subcontracting Vector Graph</h2>
+              <h2 className="text-base font-semibold text-white">1. Live Agent Subcontracting Tree Flow</h2>
             </div>
-            <HowItWorksTreeGraph />
-          </div>
-
-          {/* Interactive Protocol Architecture Visualizer */}
-          <div className="space-y-4 pt-4 border-t border-[#2C2C2E]">
-            <div className="flex items-center space-x-2">
-              <Layers className="w-4 h-4 text-purple-400" />
-              <h2 className="text-base font-semibold text-white">2. A2A Protocol & Smart Contract Architecture</h2>
-            </div>
-            <ProtocolFlowGraph />
+            <AgentSubcontractingTree />
           </div>
 
           {/* 4 Core Protocol Guarantees */}
