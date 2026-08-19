@@ -2,6 +2,7 @@ import assert from 'node:assert';
 import { test, describe } from 'node:test';
 import { buildApp } from '../src/app.js';
 import { store } from '../src/services/store.js';
+import { config } from '../src/services/config.js';
 
 describe('Fastify REST API Integration Test Suite', () => {
   const app = buildApp();
@@ -80,23 +81,57 @@ describe('Fastify REST API Integration Test Suite', () => {
     assert.ok(body.job);
     assert.strictEqual(body.job.agent_id, targetAgent.id);
 
-    // Test raising dispute
     const jobId = body.job.id;
-    const disputeRes = await app.inject({
+
+    // These used to be open to anyone who could reach the port.
+    const anonymousDispute = await app.inject({
       method: 'POST',
       url: `/api/v1/jobs/${jobId}/dispute`,
       payload: { dispute_reason: 'Code review missed reentrancy flaw' },
     });
+    assert.strictEqual(anonymousDispute.statusCode, 401);
+
+    const anonymousResolve = await app.inject({
+      method: 'POST',
+      url: `/api/v1/jobs/${jobId}/resolve-dispute`,
+      payload: { winner: 'hirer' },
+    });
+    assert.strictEqual(anonymousResolve.statusCode, 401);
+
+    // An operator with the key can still act on an ownerless legacy job.
+    config.adminKey = 'test-operator-key-0123456789';
+
+    const disputeRes = await app.inject({
+      method: 'POST',
+      url: `/api/v1/jobs/${jobId}/dispute`,
+      headers: { 'x-admin-key': config.adminKey },
+      payload: { dispute_reason: 'Code review missed reentrancy flaw' },
+    });
     assert.strictEqual(disputeRes.statusCode, 200);
 
-    // Test resolving dispute
     const resolveRes = await app.inject({
       method: 'POST',
       url: `/api/v1/jobs/${jobId}/resolve-dispute`,
+      headers: { 'x-admin-key': config.adminKey },
       payload: { winner: 'hirer' },
     });
     assert.strictEqual(resolveRes.statusCode, 200);
     const resolveBody = JSON.parse(resolveRes.payload);
     assert.strictEqual(resolveBody.job.status, 'canceled');
+
+    config.adminKey = null;
+  });
+
+  test('agent collateral cannot be slashed over HTTP any more', async () => {
+    const agent = store.getAllAgents()[0];
+    if (!agent) return;
+
+    const response = await app.inject({
+      method: 'POST',
+      url: `/api/v1/agents/${agent.id}/slash`,
+      payload: { amount: '50.00', reason: 'should not be possible' },
+    });
+
+    assert.strictEqual(response.statusCode, 404, 'the slash endpoint should no longer exist');
   });
 });
