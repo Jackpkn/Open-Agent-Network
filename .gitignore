@@ -28,3 +28,8 @@ artifacts/
 .DS_Store
 .vscode/
 .idea/
+
+# Local hub state — never commit hirers' uploaded documents
+api/data/
+data/oan.sqlite*
+**/blobs/
