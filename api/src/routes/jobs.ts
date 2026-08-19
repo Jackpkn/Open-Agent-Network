@@ -5,6 +5,31 @@ import { eventHub } from '../services/websocket-hub.js';
 import { consensusOracle } from '../services/consensus-oracle.js';
 import { disputeOracle } from '../services/dispute-oracle.js';
 import { randomUUID } from 'crypto';
+import { currentUser, requireAdmin, sendError } from '../services/auth.js';
+
+/**
+ * The legacy agent-to-agent plane. Jobs created here have no owner and hold no
+ * funds, so nothing on this path can move money. Human hiring lives on /v1/orders.
+ *
+ * Mutating routes still need to prove who is asking: before this, anyone who
+ * could reach the port could mark any job verified or slash any agent's stake.
+ */
+function authorizeJobMutation(request: any, job: Job): void {
+  if (!job.user_id) {
+    // Ownerless legacy job — only an operator may move it.
+    requireAdmin(request);
+    return;
+  }
+
+  try {
+    const user = currentUser(request);
+    if (user.id === job.user_id) return;
+  } catch {
+    // Fall through to the operator check below.
+  }
+
+  requireAdmin(request);
+}
 
 export async function jobRoutes(fastify: FastifyInstance) {
   /**
@@ -110,6 +135,12 @@ export async function jobRoutes(fastify: FastifyInstance) {
       return reply.status(404).send({ error: `Job with ID ${id} not found` });
     }
 
+    try {
+      authorizeJobMutation(request, job);
+    } catch (err) {
+      return sendError(reply, err);
+    }
+
     const completedJob = store.verifyAndCompleteJob(id, verification_proof, onchain_tx_hash);
     eventHub.broadcast('job_verified', completedJob || {});
 
@@ -137,6 +168,12 @@ export async function jobRoutes(fastify: FastifyInstance) {
     const job = store.getJob(id);
     if (!job) {
       return reply.status(404).send({ error: `Job with ID ${id} not found` });
+    }
+
+    try {
+      authorizeJobMutation(request, job);
+    } catch (err) {
+      return sendError(reply, err);
     }
 
     const disputedJob = store.disputeJob(id, dispute_reason);
@@ -167,6 +204,12 @@ export async function jobRoutes(fastify: FastifyInstance) {
       return reply.status(404).send({ error: `Job with ID ${id} not found` });
     }
 
+    try {
+      requireAdmin(request);
+    } catch (err) {
+      return sendError(reply, err);
+    }
+
     const resolvedJob = store.resolveDispute(id, winner);
     eventHub.broadcast('job_status_updated', resolvedJob || {});
     return reply.send({
@@ -185,6 +228,12 @@ export async function jobRoutes(fastify: FastifyInstance) {
 
     if (!job) {
       return reply.status(404).send({ error: `Job with ID ${id} not found` });
+    }
+
+    try {
+      authorizeJobMutation(request, job);
+    } catch (err) {
+      return sendError(reply, err);
     }
 
     store.updateJobStatus(id, 'canceled', 'Canceled due to timeout or agent server crash');
@@ -272,6 +321,12 @@ export async function jobRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { id } = request.params;
       const reason = request.body?.reason || 'Deliverable quality dispute raised by Hirer';
+
+      try {
+        requireAdmin(request);
+      } catch (err) {
+        return sendError(reply, err);
+      }
 
       try {
         const result = await disputeOracle.arbitrateDispute(id, reason);
