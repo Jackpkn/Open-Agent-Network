@@ -17,6 +17,8 @@ export interface A2AAgentCard {
     streaming?: boolean;
     pushNotifications?: boolean;
     stateTransitionHistory?: boolean;
+    /** Declares support for the async task protocol, including progress reporting. */
+    oanAsync?: boolean;
   };
   skills: Array<{
     id: string;
@@ -29,6 +31,8 @@ export interface A2AAgentCard {
   defaultInputModes?: string[];
   defaultOutputModes?: string[];
   securitySchemes?: Record<string, unknown>;
+  /** The agent's own claim about what it does with a hirer's file. Untrusted. */
+  data_handling?: unknown;
 }
 
 export interface RegisteredAgent {
@@ -57,6 +61,8 @@ export type TaskState =
 
 export interface Job {
   id: string;
+  /** Set for jobs created through the hiring plane; null for legacy agent-to-agent jobs. */
+  user_id?: string | null;
   agent_id: number;
   agent_url: string;
   agent_name: string;
@@ -99,10 +105,11 @@ export interface ChatSession {
 // ─── SQLite Store ──────────────────────────────────────────────────
 
 class DataStore {
-  private db: Database.Database;
+  public readonly db: Database.Database;
 
   constructor() {
-    const dbPath = path.join(__dirname, '..', '..', 'data', 'oan.sqlite');
+    const dbPath =
+      process.env.OAN_DB_PATH || path.join(__dirname, '..', '..', 'data', 'oan.sqlite');
     fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
     this.db = new Database(dbPath);
@@ -452,6 +459,7 @@ class DataStore {
   private rowToJob(row: any): Job {
     return {
       id: row.id,
+      user_id: row.user_id ?? null,
       agent_id: row.agent_id,
       agent_url: row.agent_url,
       agent_name: row.agent_name,
@@ -473,3 +481,13 @@ class DataStore {
 }
 
 export const store = new DataStore();
+
+/**
+ * The shared SQLite connection.
+ *
+ * New protocol tables (users, artifacts, job_events) live in their own modules
+ * but must share this connection so transactions and foreign keys work.
+ */
+export function getDb(): Database.Database {
+  return store.db;
+}

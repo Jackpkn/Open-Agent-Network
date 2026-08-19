@@ -68,14 +68,12 @@ export class ConsensusOracle {
     };
 
     if (passed) {
-      store.updateJobStatus(job.id, 'completed', job.result_text || undefined);
       eventHub.broadcast('consensus_passed', {
         jobId: job.id,
         result,
         message: `🎉 Majority Consensus Reached (${approvals}/${votes.length} Votes)! Escrow Released.`,
       });
     } else {
-      store.updateJobStatus(job.id, 'disputed', job.result_text || undefined);
       eventHub.broadcast('consensus_failed', {
         jobId: job.id,
         result,

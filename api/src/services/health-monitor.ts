@@ -2,6 +2,9 @@ import { store } from './store.js';
 import { a2aClient } from './a2a-client.js';
 import { eventHub } from './websocket-hub.js';
 
+/** Consecutive failed pings before an agent is hidden from search results. */
+const UNHEALTHY_AFTER_FAILURES = 3;
+
 export class HealthMonitorService {
   private intervalId: NodeJS.Timeout | null = null;
   private failureCounts: Map<number, number> = new Map();
@@ -52,22 +55,25 @@ export class HealthMonitorService {
     }
   }
 
+  /**
+   * An unreachable agent stops being offered to hirers. It does not lose money.
+   *
+   * This used to burn $50 of collateral after three missed pings, which prices a
+   * network blip as fraud — nobody posts a stake under that rule. Downtime is a
+   * listing problem; only arbitration touches a stake.
+   */
   private async handleHealthFailure(agent: any) {
-    const currentFailures = (this.failureCounts.get(agent.id) || 0) + 1;
-    this.failureCounts.set(agent.id, currentFailures);
+    const consecutiveFailures = (this.failureCounts.get(agent.id) || 0) + 1;
+    this.failureCounts.set(agent.id, consecutiveFailures);
     store.updateHealthStatus(agent.id, false);
 
-    if (currentFailures === 3) {
-      const slashAmount = '50.00';
-      const reason = `Agent offline / un-responsive for 3 consecutive health checks (${agent.agent_url})`;
-      store.slashAgent(agent.id, slashAmount, reason);
-
-      eventHub.broadcast('agent_slashed', {
+    if (consecutiveFailures === UNHEALTHY_AFTER_FAILURES) {
+      eventHub.broadcast('agent_status_changed', {
         agentId: agent.id,
         agentName: agent.agent_card?.name,
-        slashedUsdc: slashAmount,
-        reason,
-        message: `⚠️ Agent #${agent.id} '${agent.agent_card?.name}' slashed $${slashAmount} USDC collateral for downtime!`,
+        healthy: false,
+        consecutiveFailures,
+        message: `Agent #${agent.id} '${agent.agent_card?.name}' is unreachable and has been hidden from search.`,
       });
     }
   }

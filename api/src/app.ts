@@ -7,20 +7,41 @@ import { jobRoutes } from './routes/jobs.js';
 import { a2aRoutes } from './routes/a2a.js';
 import { analyticsRoutes } from './routes/analytics.js';
 import { chatRoutes } from './routes/chat.js';
+import { accountRoutes } from './routes/accounts.js';
+import { uploadRoutes } from './routes/uploads.js';
+import { orderRoutes } from './routes/orders.js';
+import { marketplaceRoutes } from './routes/marketplace.js';
+import { workerRoutes } from './routes/worker.js';
 import { eventHub } from './services/websocket-hub.js';
+import { initProtocolSchema } from './services/schema.js';
+import { config } from './services/config.js';
 
 export function buildApp() {
+  initProtocolSchema();
+
   const fastify = Fastify({
     logger: false,
+    bodyLimit: config.maxUploadBytes,
   });
 
-  fastify.register(cors, { origin: '*' });
+  // Files arrive as raw bodies on the upload routes. JSON keeps its own parser;
+  // this only catches content types Fastify has no parser for.
+  fastify.addContentTypeParser('*', { parseAs: 'buffer' }, (_request, body, done) => {
+    done(null, body);
+  });
+
+  fastify.register(cors, {
+    origin: '*',
+    exposedHeaders: ['X-Content-SHA256', 'Content-Disposition'],
+  });
   fastify.register(websocket);
 
   // Rate Limiting Security Middleware: Max 100 requests per minute per IP address
   fastify.register(rateLimit, {
-    max: 100,
+    max: 300,
     timeWindow: '1 minute',
+    allowList: (request) =>
+      request.url.startsWith('/oan/v1/jobs/') || request.url.includes('/events'),
     errorResponseBuilder: (request, context) => ({
       statusCode: 429,
       error: 'Too Many Requests',
@@ -64,6 +85,15 @@ export function buildApp() {
       );
     });
   });
+
+  // Consumer plane: people hiring agents.
+  fastify.register(accountRoutes);
+  fastify.register(uploadRoutes);
+  fastify.register(orderRoutes);
+  fastify.register(marketplaceRoutes);
+
+  // Worker plane: agents reporting back, authorised by job-scoped tokens.
+  fastify.register(workerRoutes);
 
   fastify.register(agentRoutes);
   fastify.register(jobRoutes);

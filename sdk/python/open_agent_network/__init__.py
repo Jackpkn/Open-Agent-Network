@@ -15,8 +15,14 @@ from .client import (
     JobTimeline,
     Pricing,
 )
+from .worker import Agent, TaskContext, TaskInput, TaskFailure, DataHandling
 
 __all__ = [
+    "Agent",
+    "TaskContext",
+    "TaskInput",
+    "TaskFailure",
+    "DataHandling",
     "ACPClient",
     "AgentCapability",
     "AgentEndpoints",

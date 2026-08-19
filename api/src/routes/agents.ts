@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { store } from '../services/store.js';
 import { a2aClient } from '../services/a2a-client.js';
 import { eventHub } from '../services/websocket-hub.js';
+import { agentKeys } from '../services/agent-keys.js';
 
 export async function agentRoutes(fastify: FastifyInstance) {
   /**
@@ -40,9 +41,19 @@ export async function agentRoutes(fastify: FastifyInstance) {
 
       eventHub.broadcast('agent_registered', registered);
 
+      // Issued once, on first registration. It is how this agent later claims
+      // what it has earned; re-registering keeps the original key.
+      const payoutKey = agentKeys.ensure(registered.id);
+
       return reply.status(201).send({
         message: 'Agent registered successfully via A2A protocol discovery',
         agent: registered,
+        ...(payoutKey
+          ? {
+              payout_key: payoutKey,
+              payout_key_notice: 'Save this key now. It is required to withdraw earnings and cannot be shown again.',
+            }
+          : {}),
       });
     } catch (err: any) {
       return reply.status(400).send({
@@ -152,33 +163,10 @@ export async function agentRoutes(fastify: FastifyInstance) {
   });
 
   /**
-   * POST /api/v1/agents/:id/slash
-   * Manually or automatically slash an agent's $100 USDC collateral stake
+   * Collateral is no longer slashable over HTTP.
+   *
+   * It was reachable by anyone who could open a socket to this port, and the
+   * health monitor spent it on missed pings. A stake should only ever be reduced
+   * by an adjudicated outcome, so slashing now lives behind dispute resolution.
    */
-  fastify.post<{ Params: { id: string }; Body: { amount?: string; reason?: string } }>(
-    '/api/v1/agents/:id/slash',
-    async (request, reply) => {
-      const id = parseInt(request.params.id, 10);
-      const agent = store.getAgent(id);
-      if (!agent) {
-        return reply.status(404).send({ error: 'Agent not found' });
-      }
-
-      const amount = request.body?.amount || '50.00';
-      const reason = request.body?.reason || 'Manual Slash Triggered';
-
-      store.slashAgent(id, amount, reason);
-      const updated = store.getAgent(id);
-
-      eventHub.broadcast('agent_slashed', {
-        agentId: id,
-        agentName: agent.agent_card?.name,
-        slashedUsdc: amount,
-        reason,
-        message: `⚠️ Agent #${id} '${agent.agent_card?.name}' slashed $${amount} USDC collateral!`,
-      });
-
-      return reply.send({ message: 'Agent slashed successfully', agent: updated });
-    }
-  );
 }

@@ -61,9 +61,17 @@ export class A2AClient {
   }
 
   /**
-   * Executes a task on a remote agent via JSON-RPC 2.0 method `tasks/send`
+   * Executes a task on a remote agent via JSON-RPC 2.0 method `tasks/send`.
+   *
+   * The default budget is a minute, not two seconds. The old two-second timeout
+   * meant any agent doing real work was reported as offline.
    */
-  async sendTask(agentUrl: string, taskId: string, prompt: string): Promise<A2ATaskResponse> {
+  async sendTask(
+    agentUrl: string,
+    taskId: string,
+    prompt: string,
+    timeoutMs = 60_000
+  ): Promise<A2ATaskResponse> {
     const cleanUrl = agentUrl.replace(/\/$/, '');
     const rpcEndpoint = `${cleanUrl}/a2a/v1/rpc`;
 
@@ -84,7 +92,7 @@ export class A2AClient {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(2000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
 
     if (!res.ok) {

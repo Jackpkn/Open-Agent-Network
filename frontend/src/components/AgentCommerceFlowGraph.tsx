@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   ReactFlow,
   Background,
@@ -14,7 +14,7 @@ import {
   useEdgesState,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   User,
   Bot,
@@ -32,9 +32,30 @@ import {
 
 // ─── Custom Node Components ─────────────────────────────────────────
 
-function HirerNode({ data }: NodeProps) {
+/** Nodes dim when the lifecycle is not currently touching them. */
+function shell(active: boolean, base: string, glow: string) {
+  return [
+    base,
+    'p-4 rounded-2xl text-white transition-all duration-500',
+    active ? `border-2 ${glow} shadow-2xl opacity-100 scale-100` : 'border-2 border-white/10 opacity-40 scale-[0.97] shadow-none',
+  ].join(' ');
+}
+
+function StatusLine({ status }: { status?: unknown }) {
+  const text = typeof status === 'string' ? status : '';
+  if (!text) return null;
   return (
-    <div className="bg-[#0D1322]/95 backdrop-blur-2xl border-2 border-blue-500/80 p-4 rounded-2xl shadow-2xl shadow-blue-500/20 text-white min-w-[240px] hover:border-blue-400 transition-colors">
+    <div className="mt-2 flex items-center gap-1.5 text-[10px] font-mono text-white/90">
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
+      <span className="truncate">{text}</span>
+    </div>
+  );
+}
+
+function HirerNode({ data }: NodeProps) {
+  const active = data.active !== false;
+  return (
+    <div className={shell(active, 'bg-[#0D1322]/95 backdrop-blur-2xl min-w-[240px]', 'border-blue-500/80 shadow-blue-500/20')}>
       <Handle type="source" position={Position.Right} className="!bg-blue-500 !w-3.5 !h-3.5" />
       <div className="flex items-center gap-3 mb-2">
         <div className="w-9 h-9 rounded-xl bg-blue-600/30 border border-blue-500/50 flex items-center justify-center text-blue-400 shadow-md">
@@ -52,13 +73,15 @@ function HirerNode({ data }: NodeProps) {
         </div>
         <p className="text-[10px] text-blue-300/80">{String(data.subtext || 'Locks in ACPEscrow.sol')}</p>
       </div>
+      <div className="text-blue-300"><StatusLine status={data.status} /></div>
     </div>
   );
 }
 
 function ProtocolHubNode({ data }: NodeProps) {
+  const active = data.active !== false;
   return (
-    <div className="bg-[#150F22]/95 backdrop-blur-2xl border-2 border-purple-500/80 p-4 rounded-2xl shadow-2xl shadow-purple-500/20 text-white min-w-[260px] hover:border-purple-400 transition-colors">
+    <div className={shell(active, 'bg-[#150F22]/95 backdrop-blur-2xl min-w-[260px]', 'border-purple-500/80 shadow-purple-500/20')}>
       <Handle type="target" position={Position.Left} className="!bg-purple-500 !w-3.5 !h-3.5" />
       <Handle type="source" position={Position.Right} className="!bg-purple-500 !w-3.5 !h-3.5" />
       <div className="flex items-center gap-3 mb-2">
@@ -74,13 +97,15 @@ function ProtocolHubNode({ data }: NodeProps) {
         <div className="text-purple-300 font-semibold">{String(data.endpoint || 'GET /agent-card.json')}</div>
         <p className="text-[10px] text-[#98989E]">{String(data.subtext || 'Google A2A Standard')}</p>
       </div>
+      <div className="text-purple-300"><StatusLine status={data.status} /></div>
     </div>
   );
 }
 
 function WorkerAgentNode({ data }: NodeProps) {
+  const active = data.active !== false;
   return (
-    <div className="bg-[#0E1A16]/95 backdrop-blur-2xl border-2 border-emerald-500/80 p-4 rounded-2xl shadow-2xl shadow-emerald-500/20 text-white min-w-[270px] hover:border-emerald-400 transition-colors">
+    <div className={shell(active, 'bg-[#0E1A16]/95 backdrop-blur-2xl min-w-[270px]', 'border-emerald-500/80 shadow-emerald-500/20')}>
       <Handle type="target" position={Position.Left} className="!bg-emerald-500 !w-3.5 !h-3.5" />
       <Handle type="source" position={Position.Right} className="!bg-emerald-500 !w-3.5 !h-3.5" />
       <div className="flex items-center gap-3 mb-2">
@@ -96,13 +121,15 @@ function WorkerAgentNode({ data }: NodeProps) {
         <div className="text-emerald-300 font-semibold">{String(data.task || 'Gemini 3.6 Audit')}</div>
         <div className="text-[10px] text-emerald-400 font-bold">{String(data.payout || 'Payout: $24.75 USDC (99%)')}</div>
       </div>
+      <div className="text-emerald-300"><StatusLine status={data.status} /></div>
     </div>
   );
 }
 
 function SubWorkerNode({ data }: NodeProps) {
+  const active = data.active !== false;
   return (
-    <div className="bg-[#1C140D]/95 backdrop-blur-2xl border-2 border-amber-500/80 p-4 rounded-2xl shadow-2xl shadow-amber-500/20 text-white min-w-[250px] hover:border-amber-400 transition-colors">
+    <div className={shell(active, 'bg-[#1C140D]/95 backdrop-blur-2xl min-w-[250px]', 'border-amber-500/80 shadow-amber-500/20')}>
       <Handle type="target" position={Position.Left} className="!bg-amber-500 !w-3.5 !h-3.5" />
       <div className="flex items-center gap-3 mb-2">
         <div className="w-9 h-9 rounded-xl bg-amber-600/30 border border-amber-500/50 flex items-center justify-center text-amber-400 shadow-md">
@@ -117,6 +144,7 @@ function SubWorkerNode({ data }: NodeProps) {
         <div className="text-amber-300 font-semibold">{String(data.subtask || 'Sub-Job #job-f02a')}</div>
         <p className="text-[10px] text-[#98989E]">{String(data.subtext || 'Sub-Escrow: $10.00 USDC')}</p>
       </div>
+      <div className="text-amber-300"><StatusLine status={data.status} /></div>
     </div>
   );
 }
@@ -173,49 +201,187 @@ const initialNodes: Node[] = [
   },
 ];
 
-const initialEdges: Edge[] = [
+const EDGE_BASE: Array<{ id: string; source: string; target: string; label: string; color: string }> = [
+  { id: 'e1-2', source: 'node-1', target: 'node-2', label: '$25.00 held', color: '#3B82F6' },
+  { id: 'e2-3', source: 'node-2', target: 'node-3', label: 'A2A task dispatch', color: '#A855F7' },
+  { id: 'e3-4', source: 'node-3', target: 'node-4', label: '$10.00 sub-escrow', color: '#F59E0B' },
+];
+
+// ─── The lifecycle, as it actually runs ─────────────────────────────
+
+interface Phase {
+  id: string;
+  rail: string;
+  caption: string;
+  /** Edge currently carrying something. */
+  firing: string[];
+  /** Edges already traversed. */
+  done: string[];
+  /** Nodes lit for this phase. */
+  active: string[];
+  /** Live status line inside each node. */
+  status: Record<string, string>;
+  /** How long this phase holds, in milliseconds. */
+  hold: number;
+}
+
+const PHASES: Phase[] = [
   {
-    id: 'e1-2',
-    source: 'node-1',
-    target: 'node-2',
-    animated: true,
-    style: { stroke: '#3B82F6', strokeWidth: 3 },
-    label: '$25.00 Lock',
-    labelStyle: { fill: '#60A5FA', fontWeight: 700, fontSize: 11 },
-    labelBgStyle: { fill: '#0B0B0E', rx: 6 },
+    id: 'hold',
+    rail: 'hold',
+    caption: 'The hirer funds the job. Money moves to a hold and goes nowhere until the result is checked.',
+    firing: ['e1-2'],
+    done: [],
+    active: ['node-1'],
+    status: { 'node-1': 'Locking $25.00 in escrow' },
+    hold: 1600,
   },
   {
-    id: 'e2-3',
-    source: 'node-2',
-    target: 'node-3',
-    animated: true,
-    style: { stroke: '#A855F7', strokeWidth: 3 },
-    label: 'A2A RPC Task',
-    labelStyle: { fill: '#C084FC', fontWeight: 700, fontSize: 11 },
-    labelBgStyle: { fill: '#0B0B0E', rx: 6 },
+    id: 'discover',
+    rail: 'discover',
+    caption: 'The hub reads the agent card to confirm the skill, the price and the steps it will report.',
+    firing: [],
+    done: ['e1-2'],
+    active: ['node-2'],
+    status: { 'node-1': 'Held', 'node-2': 'Reading /.well-known/agent-card.json' },
+    hold: 1400,
   },
   {
-    id: 'e3-4',
-    source: 'node-3',
-    target: 'node-4',
-    animated: true,
-    style: { stroke: '#F59E0B', strokeWidth: 3 },
-    label: '$10.00 Sub-Escrow',
-    labelStyle: { fill: '#FBBF24', fontWeight: 700, fontSize: 11 },
-    labelBgStyle: { fill: '#0B0B0E', rx: 6 },
+    id: 'dispatch',
+    rail: 'dispatch',
+    caption: 'The task goes out with a token scoped to this one job. The hirer\u2019s request already returned.',
+    firing: ['e2-3'],
+    done: ['e1-2'],
+    active: ['node-2', 'node-3'],
+    status: { 'node-1': 'Held', 'node-2': 'Dispatching job-9821', 'node-3': 'Accepted' },
+    hold: 1600,
+  },
+  {
+    id: 'subcontract',
+    rail: 'work',
+    caption: 'The worker hires a specialist for part of the job, under its own escrow. Agents can hire agents.',
+    firing: ['e3-4'],
+    done: ['e1-2', 'e2-3'],
+    active: ['node-3', 'node-4'],
+    status: { 'node-1': 'Held', 'node-3': 'Subcontracting AST scan', 'node-4': 'Accepted' },
+    hold: 1700,
+  },
+  {
+    id: 'working',
+    rail: 'work',
+    caption: 'Both agents report progress on a heartbeat. Silence for too long stalls the job and refunds the hirer.',
+    firing: [],
+    done: ['e1-2', 'e2-3', 'e3-4'],
+    active: ['node-3', 'node-4'],
+    status: { 'node-1': 'Held', 'node-3': 'Auditing \u00b7 step 2 of 3', 'node-4': 'Scanning AST \u00b7 74%' },
+    hold: 1800,
+  },
+  {
+    id: 'verify',
+    rail: 'verify',
+    caption: 'Output is checked before anything is released. A result that fails becomes a refund, not a payment.',
+    firing: [],
+    done: ['e1-2', 'e2-3', 'e3-4'],
+    active: ['node-2'],
+    status: { 'node-1': 'Held', 'node-2': 'Checks passed \u00b7 hashes verified', 'node-3': 'Delivered', 'node-4': 'Delivered' },
+    hold: 1500,
+  },
+  {
+    id: 'settle',
+    rail: 'paid',
+    caption: 'Escrow releases: 99% to the agents that did the work, 1% to the protocol. Recorded on a receipt.',
+    firing: [],
+    done: ['e1-2', 'e2-3', 'e3-4'],
+    active: ['node-1', 'node-2', 'node-3', 'node-4'],
+    status: {
+      'node-1': 'Paid $25.00',
+      'node-2': 'Settled',
+      'node-3': 'Earned $14.75',
+      'node-4': 'Earned $9.90',
+    },
+    hold: 2600,
   },
 ];
 
+const RAIL = ['hold', 'discover', 'dispatch', 'work', 'verify', 'paid'];
+
+function edgesForPhase(phase: Phase): Edge[] {
+  return EDGE_BASE.map((edge) => {
+    const firing = phase.firing.includes(edge.id);
+    const done = phase.done.includes(edge.id);
+
+    return {
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
+      animated: firing,
+      label: firing || done ? edge.label : undefined,
+      style: {
+        stroke: firing ? edge.color : done ? edge.color : '#2A2A33',
+        strokeWidth: firing ? 3.5 : done ? 2 : 1.5,
+        opacity: firing ? 1 : done ? 0.55 : 0.35,
+      },
+      labelStyle: { fill: firing ? edge.color : '#6B7280', fontWeight: 700, fontSize: 11 },
+      labelBgStyle: { fill: '#0B0B0E', rx: 6 },
+    } satisfies Edge;
+  });
+}
+
 // ─── Main Component ────────────────────────────────────────────────
 
-export function AgentCommerceFlowGraph() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+interface FlowGraphProps {
+  /** Hide the built-in heading when the surrounding page provides one. */
+  showHeading?: boolean;
+  /** Hide the payload inspector for compact placements such as the hero. */
+  showInspector?: boolean;
+  height?: number;
+}
+
+export function AgentCommerceFlowGraph({
+  showHeading = true,
+  showInspector = true,
+  height = 460,
+}: FlowGraphProps = {}) {
+  const reduceMotion = useReducedMotion();
+  const [phaseIndex, setPhaseIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string>('node-2');
   const [copied, setCopied] = useState<boolean>(false);
 
+  const phase = PHASES[phaseIndex];
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(edgesForPhase(PHASES[0]));
+
+  // Someone who prefers reduced motion sees the finished job rather than a loop.
+  useEffect(() => {
+    if (reduceMotion) setPhaseIndex(PHASES.length - 1);
+  }, [reduceMotion]);
+
+  useEffect(() => {
+    if (reduceMotion || paused) return;
+    const timer = setTimeout(() => setPhaseIndex((i) => (i + 1) % PHASES.length), phase.hold);
+    return () => clearTimeout(timer);
+  }, [phase, paused, reduceMotion]);
+
+  // Push the current phase into the canvas.
+  useEffect(() => {
+    setNodes((current) =>
+      current.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          active: phase.active.includes(node.id),
+          status: phase.status[node.id] ?? '',
+        },
+      }))
+    );
+    setEdges(edgesForPhase(phase));
+  }, [phase, setNodes, setEdges]);
+
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedNodeId(node.id);
+    setPaused(true); // stop the loop so the payload can actually be read
   }, []);
 
   const getPayloadForNode = (id: string) => {
@@ -295,24 +461,30 @@ ACPEscrow.createContract(
     setTimeout(() => setCopied(false), 1600);
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Section Title */}
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-mono font-bold text-blue-400">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>ReactFlow v12 Dynamic Tree Canvas</span>
-        </div>
-        <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-          How Agent Commerce Works
-        </h2>
-        <p className="text-xs sm:text-sm text-[#98989E] max-w-xl mx-auto">
-          Interactive A2A DAG tree graph. Click any node to inspect real-time JSON-RPC payloads, discovery cards, and escrow flows.
-        </p>
-      </div>
+  const railIndex = RAIL.indexOf(phase.rail);
 
-      {/* ─── 1. Interactive ReactFlow Canvas ──────────────────────────── */}
-      <div className="w-full h-[460px] rounded-3xl bg-[#07070A] border border-white/10 shadow-2xl relative overflow-hidden">
+  return (
+    <div className="space-y-5">
+      {showHeading && (
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-mono font-bold text-blue-400">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>One job, end to end</span>
+          </div>
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+            How Agent Commerce Works
+          </h2>
+          <p className="text-xs sm:text-sm text-[#98989E] max-w-xl mx-auto">
+            Watch a job move through the protocol. Click any node to inspect the payload behind that step.
+          </p>
+        </div>
+      )}
+
+      {/* ─── Live lifecycle canvas ───────────────────────────────────── */}
+      <div
+        className="w-full rounded-3xl bg-[#07070A] border border-white/10 shadow-2xl relative overflow-hidden"
+        style={{ height }}
+      >
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -321,54 +493,110 @@ ACPEscrow.createContract(
           onEdgesChange={onEdgesChange}
           onNodeClick={onNodeClick}
           fitView
-          attributionPosition="bottom-right"
+          fitViewOptions={{ padding: 0.12 }}
+          proOptions={{ hideAttribution: true }}
           className="bg-[#07070A]"
         >
           <Background color="#1E293B" gap={24} size={1.5} />
-          <Controls className="!bg-[#141419] !border-white/10 !text-white rounded-xl shadow-xl" />
+          <Controls className="!bg-[#141419] !border-white/10 !text-white rounded-xl shadow-xl" showInteractive={false} />
         </ReactFlow>
+
+        {/* phase rail */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#07070A] via-[#07070A]/95 to-transparent px-5 pb-4 pt-10">
+          <div className="pointer-events-auto flex flex-wrap items-center justify-between gap-3">
+            <ol className="flex items-center gap-1.5">
+              {RAIL.map((step, index) => {
+                const reached = index <= railIndex;
+                const current = index === railIndex;
+                return (
+                  <li key={step} className="flex items-center gap-1.5">
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full transition-colors duration-300 ${
+                        current ? 'bg-blue-400' : reached ? 'bg-emerald-400' : 'bg-white/20'
+                      }`}
+                    />
+                    <span
+                      className={`font-mono text-[10px] uppercase tracking-wider transition-colors duration-300 ${
+                        current ? 'text-white' : reached ? 'text-emerald-300/80' : 'text-white/30'
+                      }`}
+                    >
+                      {step}
+                    </span>
+                    {index < RAIL.length - 1 && <span className="mx-1 h-px w-4 bg-white/10" />}
+                  </li>
+                );
+              })}
+            </ol>
+
+            {!reduceMotion && (
+              <button
+                type="button"
+                onClick={() => setPaused((value) => !value)}
+                className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-[#98989E] transition-colors hover:text-white"
+              >
+                {paused ? 'Play' : 'Pause'}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* ─── 2. Selected Node Code & Protocol Payload Inspector ──────── */}
-      <motion.div
-        key={selectedNodeId}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        className="rounded-2xl bg-[#0F0F14] border border-white/10 overflow-hidden shadow-2xl"
-      >
-        <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 bg-black/40">
-          <div className="flex items-center gap-2 font-mono text-xs text-white">
-            <Code2 className="w-4 h-4 text-purple-400" />
-            <span className="font-bold">{payload.title}</span>
-            <span className="text-[#636366]">•</span>
-            <span className="text-[#98989E]">{payload.type}</span>
+      {/* what is happening right now */}
+      <AnimatePresence mode="wait">
+        <motion.p
+          key={phase.id}
+          initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reduceMotion ? undefined : { opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="mx-auto max-w-2xl text-center text-sm leading-relaxed text-[#98989E]"
+        >
+          {phase.caption}
+        </motion.p>
+      </AnimatePresence>
+
+      {/* ─── Payload inspector ───────────────────────────────────────── */}
+      {showInspector && (
+        <motion.div
+          key={selectedNodeId}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="rounded-2xl bg-[#0F0F14] border border-white/10 overflow-hidden shadow-2xl"
+        >
+          <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 bg-black/40">
+            <div className="flex items-center gap-2 font-mono text-xs text-white">
+              <Code2 className="w-4 h-4 text-purple-400" />
+              <span className="font-bold">{payload.title}</span>
+              <span className="text-[#636366]">•</span>
+              <span className="text-[#98989E]">{payload.type}</span>
+            </div>
+
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-[#98989E] hover:text-white transition-colors"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-emerald-400 font-medium">Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy Payload</span>
+                </>
+              )}
+            </button>
           </div>
 
-          <button
-            onClick={handleCopy}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-[#98989E] hover:text-white transition-colors"
-          >
-            {copied ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-400 font-medium">Copied</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5" />
-                <span>Copy Payload</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        <div className="p-4">
-          <pre className="p-4 rounded-xl bg-black/70 border border-white/5 text-xs font-mono text-[#E4E4E7] overflow-x-auto leading-relaxed max-h-[220px] chat-scrollbar">
-            <code>{payload.code}</code>
-          </pre>
-        </div>
-      </motion.div>
+          <div className="p-4">
+            <pre className="p-4 rounded-xl bg-black/70 border border-white/5 text-xs font-mono text-[#E4E4E7] overflow-x-auto leading-relaxed max-h-[220px] chat-scrollbar">
+              <code>{payload.code}</code>
+            </pre>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
