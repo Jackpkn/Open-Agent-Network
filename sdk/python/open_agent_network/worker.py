@@ -28,6 +28,7 @@ from __future__ import annotations
 import hashlib
 import json
 import threading
+import time
 import traceback
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -376,6 +377,29 @@ class Agent:
         response.raise_for_status()
         return response.json()
 
+    def _register_when_reachable(self, hub_url: str, attempts: int = 30) -> None:
+        """
+        Keep trying to register in the background.
+
+        Under an orchestrator the hub and its agents start in whatever order they
+        like, so a single attempt at boot loses the race about half the time. The
+        hub must also be able to fetch this agent's card, which means this agent
+        has to be listening first — hence registering after serve() starts.
+        """
+        for attempt in range(attempts):
+            try:
+                result = self.register(hub_url)
+                key = result.get("payout_key")
+                print(f"[oan] registered with {hub_url}")
+                if key:
+                    print(f"[oan] payout key (shown once, needed to withdraw earnings): {key}")
+                return
+            except Exception as err:  # noqa: BLE001 - the hub may not be up yet
+                if attempt == attempts - 1:
+                    print(f"[oan] could not register with {hub_url}: {err}")
+                    return
+                time.sleep(min(2 + attempt, 10))
+
     # ── running a task ────────────────────────────────────────────────
 
     def _run(self, envelope: Dict[str, Any]) -> None:
@@ -409,8 +433,18 @@ class Agent:
 
     # ── HTTP ──────────────────────────────────────────────────────────
 
-    def serve(self, port: int = 8080, host: str = "0.0.0.0") -> None:
+    def serve(
+        self,
+        port: int = 8080,
+        host: str = "0.0.0.0",
+        register_with: Optional[str] = None,
+    ) -> None:
+        """
+        Start serving. Pass `register_with` (or set OAN_HUB_URL) to announce this
+        agent to a hub once it is listening.
+        """
         agent = self
+        hub_url = register_with or os.environ.get("OAN_HUB_URL")
 
         class Handler(BaseHTTPRequestHandler):
             protocol_version = "HTTP/1.1"
@@ -466,6 +500,15 @@ class Agent:
         server = ThreadingHTTPServer((host, port), Handler)
         skills = ", ".join(self._tasks) or "none"
         print(f"[oan] {self.name} listening on http://{host}:{port}  (skills: {skills})")
+
+        if hub_url:
+            if not self.public_url:
+                print("[oan] OAN_HUB_URL is set but public_url is not — skipping registration.")
+            else:
+                print(f"[oan] registering at {hub_url} as {self.public_url}")
+                threading.Thread(
+                    target=self._register_when_reachable, args=(hub_url,), daemon=True
+                ).start()
         try:
             server.serve_forever()
         except KeyboardInterrupt:

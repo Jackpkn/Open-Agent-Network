@@ -24,7 +24,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "sdk" / "python"))
 from open_agent_network import Agent, TaskFailure  # noqa: E402
 
 PORT = int(os.environ.get("PORT", "8010"))
-HUB_URL = os.environ.get("OAN_HUB_URL", "http://localhost:3001")
 
 agent = Agent(
     name="Ledger Extract",
@@ -94,11 +93,5 @@ def extract(ctx):
 
 
 if __name__ == "__main__":
-    if os.environ.get("OAN_REGISTER", "").lower() in {"1", "true", "yes"}:
-        try:
-            agent.register(HUB_URL)
-            print(f"[oan] registered with {HUB_URL}")
-        except Exception as err:  # noqa: BLE001
-            print(f"[oan] could not register with {HUB_URL}: {err}")
-
+    # serve() registers with OAN_HUB_URL when it is set, once this agent is listening.
     agent.serve(port=PORT)
