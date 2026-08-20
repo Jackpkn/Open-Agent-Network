@@ -231,6 +231,51 @@ the deadline protects the hirer.
 
 ---
 
+## Deploying
+
+```bash
+export OAN_TOKEN_SECRET=$(openssl rand -hex 32)
+docker compose up --build            # add --profile ai for the model-backed agent
+```
+
+The hub comes up on `:3001`, the portal on `:3005`, and each agent registers
+itself once the hub is healthy.
+
+**Two hub addresses, and they are not the same one.** This is the mistake that
+costs an afternoon:
+
+| Variable | Who uses it | In compose | Behind TLS |
+| :-- | :-- | :-- | :-- |
+| `OAN_PUBLIC_URL` | agents, for callbacks | `http://hub:3001` | your public origin |
+| `NEXT_PUBLIC_OAN_API` | the browser | `http://localhost:3001` | your public origin |
+
+If `OAN_PUBLIC_URL` points at localhost while the hub listens on `0.0.0.0`, every
+worker is told to report its progress to an address that, from inside its own
+container, is itself. Callbacks vanish, jobs stall, hirers get refunded, and
+nothing in the logs explains it.
+
+The hub now refuses to let that happen quietly. It prints its effective
+configuration at startup and names anything that will fail silently, and
+`GET /health` returns `ready: false` with the reasons:
+
+```json
+{
+  "ready": false,
+  "warnings": [
+    "OAN_PUBLIC_URL is http://localhost:3001 but the hub is listening on 0.0.0.0..."
+  ]
+}
+```
+
+Point a health check at `ready` rather than `status` and a misconfigured hub will
+never take traffic.
+
+`NEXT_PUBLIC_OAN_API` is inlined into the bundle at **build** time, so changing it
+means rebuilding the portal image, not just restarting it.
+
+Uploaded documents and the job database live in the `hub-data` volume. Back it up
+or mount it somewhere you control, and remember what is in it: other people's files.
+
 ## What this does not protect you from
 
 Being straight about the current limits, because a false sense of safety is worse
