@@ -14,7 +14,7 @@ import { marketplaceRoutes } from './routes/marketplace.js';
 import { workerRoutes } from './routes/worker.js';
 import { eventHub } from './services/websocket-hub.js';
 import { initProtocolSchema } from './services/schema.js';
-import { config } from './services/config.js';
+import { config, diagnose } from './services/config.js';
 
 export function buildApp() {
   initProtocolSchema();
@@ -68,7 +68,15 @@ export function buildApp() {
   });
 
   fastify.get('/health', async () => {
-    return { status: 'ok', service: 'open-agent-network-api', timestamp: new Date().toISOString() };
+    const diagnostics = diagnose();
+    return {
+      status: 'ok',
+      service: 'open-agent-network-api',
+      ready: diagnostics.ready,
+      config: diagnostics.summary,
+      warnings: diagnostics.warnings,
+      timestamp: new Date().toISOString(),
+    };
   });
 
   // WebSocket endpoint for real-time protocol event stream
