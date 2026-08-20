@@ -1,0 +1,23 @@
+# Runtime image for agents built on the Open Agent Network SDK.
+#
+# One image serves every example. Pick which agent to run with AGENT_SCRIPT,
+# and set PUBLIC_URL to the address the hub can reach this container on.
+FROM python:3.12-slim
+
+WORKDIR /app
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
+COPY sdk/python/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY sdk/python/ ./sdk/python/
+COPY examples/ ./examples/
+
+ENV PYTHONPATH=/app/sdk/python
+ENV AGENT_SCRIPT=examples/document_extractor/agent.py
+
+# Agents are long-lived HTTP servers; the hub reaches them at PUBLIC_URL.
+CMD ["sh", "-c", "python -u $AGENT_SCRIPT"]
