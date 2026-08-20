@@ -1,7 +1,21 @@
-version: '3.8'
+# Open Agent Network — local and single-host deployment.
+#
+#   OAN_TOKEN_SECRET=$(openssl rand -hex 32) docker compose up --build
+#
+# Two URLs matter here and they are deliberately different:
+#
+#   OAN_PUBLIC_URL     where agents reach the hub. On this network that is
+#                      http://hub:3001. Setting it to localhost is the classic
+#                      mistake — from inside an agent container, localhost is
+#                      the agent itself, so every callback silently fails and
+#                      every job stalls out and refunds.
+#
+#   NEXT_PUBLIC_OAN_API  where the *browser* reaches the hub. That is a real
+#                      address on the host, not a compose service name.
+#
+# Behind TLS, set both to your public https:// origin.
 
 services:
-  # 1. Fastify Protocol Hub API (Port 3001)
   hub:
     build:
       context: ./api
@@ -9,87 +23,107 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - PORT=3001
-      - HOST=0.0.0.0
-      - NODE_ENV=development
+      PORT: 3001
+      HOST: 0.0.0.0
+      NODE_ENV: production
+      # Signs every capability token. The hub refuses to start without it.
+      OAN_TOKEN_SECRET: ${OAN_TOKEN_SECRET:?set OAN_TOKEN_SECRET, e.g. export OAN_TOKEN_SECRET=$(openssl rand -hex 32)}
+      # Reachable from the agent containers, not from your browser.
+      OAN_PUBLIC_URL: http://hub:3001
+      # Arbitration endpoints stay closed unless this is set.
+      OAN_ADMIN_KEY: ${OAN_ADMIN_KEY:-}
+      OAN_ESCROW_MODE: ${OAN_ESCROW_MODE:-off}
+      OAN_DB_PATH: /app/data/oan.sqlite
+      OAN_BLOB_ROOT: /app/data/blobs
     volumes:
-      - ./api/data:/app/data
-    networks:
-      - oan-network
+      - hub-data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks: [oan]
     restart: unless-stopped
 
-  # 2. Next.js 16 Web Portal (Port 3005)
   portal:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        # Baked in at build time, so it must be the browser-facing address.
+        NEXT_PUBLIC_OAN_API: ${OAN_BROWSER_URL:-http://localhost:3001}
     ports:
-      - "3005:3005"
+      - "3005:3000"
     environment:
-      - PORT=3005
-      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_OAN_API: ${OAN_BROWSER_URL:-http://localhost:3001}
     depends_on:
-      - hub
-    networks:
-      - oan-network
+      hub:
+        condition: service_healthy
+    networks: [oan]
     restart: unless-stopped
 
-  # 3. Python A2A Primary Code Auditor Agent (Port 8001)
-  agent-code-auditor:
-    build:
-      context: .
-      dockerfile: Dockerfile.agent
-    ports:
-      - "8001:8001"
+  # ─── Agents ──────────────────────────────────────────────────────────
+  # Each registers itself with the hub once it is listening. PUBLIC_URL is how
+  # the hub fetches its card and delivers work, so it is the service name here.
+
+  agent-extractor:
+    build: { context: ., dockerfile: Dockerfile.agent }
     environment:
-      - PORT=8001
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-    networks:
-      - oan-network
+      AGENT_SCRIPT: examples/document_extractor/agent.py
+      PORT: 8010
+      PUBLIC_URL: http://agent-extractor:8010
+      OAN_HUB_URL: http://hub:3001
+    depends_on:
+      hub: { condition: service_healthy }
+    networks: [oan]
     restart: unless-stopped
 
-  # 4. Python A2A Translator Agent (Port 8002)
-  agent-translator:
-    build:
-      context: .
-      dockerfile: Dockerfile.agent
-    ports:
-      - "8002:8002"
+  agent-auditor:
+    build: { context: ., dockerfile: Dockerfile.agent }
     environment:
-      - PORT=8002
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-    networks:
-      - oan-network
+      AGENT_SCRIPT: examples/code_auditor/agent.py
+      PORT: 8011
+      PUBLIC_URL: http://agent-auditor:8011
+      OAN_HUB_URL: http://hub:3001
+    depends_on:
+      hub: { condition: service_healthy }
+    networks: [oan]
     restart: unless-stopped
 
-  # 5. Python A2A SecurityScanner Sub-worker Agent (Port 8003)
-  agent-security-scanner:
-    build:
-      context: .
-      dockerfile: Dockerfile.agent
-    ports:
-      - "8003:8003"
+  agent-summariser:
+    build: { context: ., dockerfile: Dockerfile.agent }
     environment:
-      - PORT=8003
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-    networks:
-      - oan-network
+      AGENT_SCRIPT: examples/summarizer/agent.py
+      PORT: 8012
+      PUBLIC_URL: http://agent-summariser:8012
+      OAN_HUB_URL: http://hub:3001
+    depends_on:
+      hub: { condition: service_healthy }
+    networks: [oan]
     restart: unless-stopped
 
-  # 6. Python A2A DocWriter Sub-worker Agent (Port 8004)
-  agent-doc-writer:
-    build:
-      context: .
-      dockerfile: Dockerfile.agent
-    ports:
-      - "8004:8004"
+  # Sends the hirer's file to a model provider, so it only starts with a key.
+  agent-ai-review:
+    build: { context: ., dockerfile: Dockerfile.agent }
     environment:
-      - PORT=8004
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-    networks:
-      - oan-network
+      AGENT_SCRIPT: examples/code_review_agent/oan_agent.py
+      PORT: 8013
+      PUBLIC_URL: http://agent-ai-review:8013
+      OAN_HUB_URL: http://hub:3001
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    depends_on:
+      hub: { condition: service_healthy }
+    networks: [oan]
+    profiles: ["ai"]
     restart: unless-stopped
+
+volumes:
+  hub-data:
 
 networks:
-  oan-network:
+  oan:
     driver: bridge
