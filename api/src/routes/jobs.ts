@@ -6,6 +6,11 @@ import { consensusOracle } from '../services/consensus-oracle.js';
 import { disputeOracle } from '../services/dispute-oracle.js';
 import { randomUUID } from 'crypto';
 import { currentUser, requireAdmin, sendError } from '../services/auth.js';
+import {
+  authorizeLegacyWork,
+  holdForLegacyWork,
+  settleLegacyWork,
+} from '../services/legacy-access.js';
 
 /**
  * The legacy agent-to-agent plane. Jobs created here have no owner and hold no
@@ -59,6 +64,14 @@ export async function jobRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ error: 'agent_id and task_prompt are required' });
     }
 
+    // This makes a registered agent do work, so it needs an account to bill.
+    let caller;
+    try {
+      caller = authorizeLegacyWork(request);
+    } catch (err) {
+      return sendError(reply, err);
+    }
+
     const agent = store.getAgent(agent_id);
     if (!agent) {
       return reply.status(404).send({ error: `Agent with ID ${agent_id} not found` });
@@ -66,9 +79,16 @@ export async function jobRoutes(fastify: FastifyInstance) {
 
     const jobId = `job-${randomUUID().slice(0, 8)}`;
 
+    try {
+      holdForLegacyWork(caller, jobId, agent.pricing_amount || '25.00');
+    } catch (err) {
+      return sendError(reply, err);
+    }
+
     // 1. Save Job in SQLite DB with status 'submitted'
     const newJob: Job = store.createJob({
       id: jobId,
+      user_id: caller?.id ?? null,
       agent_id: agent.id,
       agent_url: agent.agent_url,
       agent_name: agent.agent_card.name,
@@ -101,15 +121,22 @@ export async function jobRoutes(fastify: FastifyInstance) {
       const updatedJob = store.getJob(jobId);
       eventHub.broadcast('job_status_updated', updatedJob || {});
 
+      settleLegacyWork(caller, jobId, agent.id, true, 'Agent returned a result');
+
       return reply.status(201).send({
         message: 'Job dispatched and processed over A2A protocol',
         job: updatedJob,
       });
     } catch (err: any) {
-      store.updateJobStatus(jobId, 'submitted', `A2A Execution Warning: ${err.message}`);
+      store.updateJobStatus(jobId, 'failed', `Agent unreachable: ${err.message}`);
+
+      // The agent never ran, so nothing is owed.
+      settleLegacyWork(caller, jobId, agent.id, false, 'Refunded: the agent could not be reached');
+
       const savedJob = store.getJob(jobId);
-      return reply.status(201).send({
-        message: 'Job created in escrow (Agent offline or async execution)',
+      return reply.status(502).send({
+        error: 'agent_unreachable',
+        message: `The agent did not respond: ${err.message}. You have not been charged.`,
         job: savedJob,
       });
     }

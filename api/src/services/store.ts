@@ -281,12 +281,13 @@ class DataStore {
 
   createJob(job: Omit<Job, 'created_at' | 'updated_at'>): Job {
     const stmt = this.db.prepare(`
-      INSERT INTO jobs (id, agent_id, agent_url, agent_name, skill_id, task_prompt, status, pricing_amount, pricing_currency, onchain_tx_hash, verification_proof)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO jobs (id, user_id, agent_id, agent_url, agent_name, skill_id, task_prompt, status, pricing_amount, pricing_currency, onchain_tx_hash, verification_proof)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
       job.id,
+      job.user_id ?? null,
       job.agent_id,
       job.agent_url,
       job.agent_name,
