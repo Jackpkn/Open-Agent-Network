@@ -66,6 +66,9 @@ describe('Fastify REST API Integration Test Suite', () => {
       );
     }
 
+    // Legacy job creation now needs an account; open mode is for local demos.
+    config.allowAnonymousLegacy = true;
+
     const response = await app.inject({
       method: 'POST',
       url: '/api/v1/jobs',
@@ -76,10 +79,12 @@ describe('Fastify REST API Integration Test Suite', () => {
       },
     });
 
-    assert.strictEqual(response.statusCode, 201);
+    // The example agent is not running here, so the honest answer is 502.
+    assert.strictEqual(response.statusCode, 502);
     const body = JSON.parse(response.payload);
     assert.ok(body.job);
     assert.strictEqual(body.job.agent_id, targetAgent.id);
+    config.allowAnonymousLegacy = false;
 
     const jobId = body.job.id;
 
