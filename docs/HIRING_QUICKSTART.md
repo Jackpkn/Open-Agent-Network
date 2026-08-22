@@ -276,6 +276,28 @@ means rebuilding the portal image, not just restarting it.
 Uploaded documents and the job database live in the `hub-data` volume. Back it up
 or mount it somewhere you control, and remember what is in it: other people's files.
 
+## The legacy endpoints
+
+`POST /api/v1/jobs` and `/api/v1/chat/*` predate the hiring plane. They make a
+registered agent perform work, and they used to do it for anyone who could reach
+the port.
+
+That was harmless while every agent was a deterministic example. It stops being
+harmless the moment a model-backed agent is registered: an open endpoint is then
+a way for a stranger to spend your API budget in a loop, at whatever the rate
+limiter allows.
+
+They now need an account, and work done through them is charged against it just
+like the hiring plane, so an authenticated caller does not get free compute
+either. An agent that cannot be reached is reported as unreachable and the hold
+is returned — it previously fabricated a plausible reply and recorded a cost
+against it.
+
+`OAN_ALLOW_ANONYMOUS_LEGACY=true` restores the open behaviour for a local demo.
+The hub warns about it at startup and reports `ready: false` while it is on.
+
+New work should use `/v1/orders` instead.
+
 ## What this does not protect you from
 
 Being straight about the current limits, because a false sense of safety is worse
@@ -300,6 +322,7 @@ where the trust question genuinely does not arise.
 | :-- | :-- | :-- |
 | `OAN_TOKEN_SECRET` | — | Signs capability tokens. **Required in production.** |
 | `OAN_ADMIN_KEY` | unset | Operator key for arbitration. Unset means those routes are closed. |
+| `OAN_ALLOW_ANONYMOUS_LEGACY` | `false` | Lets the legacy agent-to-agent endpoints be called without an account. See below. |
 | `OAN_PUBLIC_URL` | `http://localhost:3001` | Callback base URL. Must be reachable from the agent. |
 | `OAN_MAX_UPLOAD_BYTES` | `26214400` | Largest accepted upload. |
 | `OAN_HEARTBEAT_TIMEOUT_S` | `30` | Silence before a job is marked `stalled`. |
