@@ -3,6 +3,12 @@ import { store } from '../services/store.js';
 import { a2aClient } from '../services/a2a-client.js';
 import { eventHub } from '../services/websocket-hub.js';
 import { randomUUID } from 'crypto';
+import { sendError } from '../services/auth.js';
+import {
+  authorizeLegacyWork,
+  holdForLegacyWork,
+  settleLegacyWork,
+} from '../services/legacy-access.js';
 
 export async function chatRoutes(fastify: FastifyInstance) {
   /**
@@ -24,6 +30,14 @@ export async function chatRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ error: 'agent_id and message are required' });
     }
 
+    // Sending a message makes the agent do work, so it needs an account to bill.
+    let caller;
+    try {
+      caller = authorizeLegacyWork(request);
+    } catch (err) {
+      return sendError(reply, err);
+    }
+
     const agent = store.getAgent(agent_id);
     if (!agent) {
       return reply.status(404).send({ error: `Agent with ID ${agent_id} not found` });
@@ -31,6 +45,12 @@ export async function chatRoutes(fastify: FastifyInstance) {
 
     const chatSessionId = session_id || `chat-${randomUUID().slice(0, 12)}`;
     const jobId = `chat-${randomUUID().slice(0, 8)}`;
+
+    try {
+      holdForLegacyWork(caller, jobId, agent.pricing_amount || '0.00');
+    } catch (err) {
+      return sendError(reply, err);
+    }
 
     // 1. Save user message to chat history
     const userMsg = store.createChatMessage({
@@ -44,6 +64,7 @@ export async function chatRoutes(fastify: FastifyInstance) {
     // 2. Create a lightweight job for this chat interaction
     const newJob = store.createJob({
       id: jobId,
+      user_id: caller?.id ?? null,
       agent_id: agent.id,
       agent_url: agent.agent_url,
       agent_name: agent.agent_card.name,
@@ -74,11 +95,20 @@ export async function chatRoutes(fastify: FastifyInstance) {
         JSON.stringify(a2aResponse.artifacts || [])
       );
     } catch (err: any) {
-      // Agent offline — generate a simulated intelligent response
-      agentResponse = generateSimulatedResponse(agent.agent_card.name, message);
-      responseStatus = 'completed';
-      store.updateJobStatus(jobId, 'completed', agentResponse);
+      // The agent did not answer. Say so, and charge nothing — this used to
+      // fabricate a plausible reply and record a cost against it.
+      store.updateJobStatus(jobId, 'failed', `Agent unreachable: ${err.message}`);
+      settleLegacyWork(caller, jobId, agent.id, false, 'Refunded: the agent could not be reached');
+
+      return reply.status(502).send({
+        error: 'agent_unreachable',
+        message: `${agent.agent_card.name} did not respond. You have not been charged.`,
+        session_id: chatSessionId,
+        job_id: jobId,
+      });
     }
+
+    settleLegacyWork(caller, jobId, agent.id, true, 'Agent replied');
 
     // 4. Save agent response to chat history
     const agentMsg = store.createChatMessage({
@@ -113,6 +143,12 @@ export async function chatRoutes(fastify: FastifyInstance) {
   }>('/api/v1/chat/stream', async (request, reply) => {
     const { agent_id, prompt = 'Hello', session_id } = request.query || {};
 
+    try {
+      authorizeLegacyWork(request);
+    } catch (err) {
+      return sendError(reply, err);
+    }
+
     const agentIdNum = parseInt(agent_id || '1', 10);
     const agent = store.getAgent(agentIdNum);
 
@@ -141,21 +177,12 @@ export async function chatRoutes(fastify: FastifyInstance) {
     try {
       const response = await fetch(targetUrl, { signal: AbortSignal.timeout(30000) });
       if (!response.body) {
-        // Fallback: generate streamed simulated response
-        const simResponse = generateSimulatedResponse(agent.agent_card.name, prompt);
-        const words = simResponse.split(' ');
-        for (const word of words) {
-          reply.raw.write(`data: ${JSON.stringify({ type: 'token', content: word + ' ' })}\n\n`);
-          await sleep(50);
-        }
-        reply.raw.write(`data: ${JSON.stringify({ type: 'done', session_id: chatSessionId })}\n\n`);
-
-        store.createChatMessage({
-          session_id: chatSessionId,
-          agent_id: agentIdNum,
-          role: 'agent',
-          content: simResponse,
-        });
+        reply.raw.write(
+          `data: ${JSON.stringify({
+            type: 'error',
+            content: `${agent.agent_card.name} returned no response stream.`,
+          })}\n\n`
+        );
         return reply.raw.end();
       }
 
@@ -183,21 +210,13 @@ export async function chatRoutes(fastify: FastifyInstance) {
         });
       }
     } catch (err: any) {
-      // Fallback to simulated streaming
-      const simResponse = generateSimulatedResponse(agent.agent_card.name, prompt);
-      const words = simResponse.split(' ');
-      for (const word of words) {
-        reply.raw.write(`data: ${JSON.stringify({ type: 'token', content: word + ' ' })}\n\n`);
-        await sleep(40);
-      }
-      reply.raw.write(`data: ${JSON.stringify({ type: 'done', session_id: chatSessionId })}\n\n`);
-
-      store.createChatMessage({
-        session_id: chatSessionId,
-        agent_id: agentIdNum,
-        role: 'agent',
-        content: simResponse,
-      });
+      // An unreachable agent is reported as unreachable, not impersonated.
+      reply.raw.write(
+        `data: ${JSON.stringify({
+          type: 'error',
+          content: `${agent.agent_card.name} did not respond: ${err.message}`,
+        })}\n\n`
+      );
     }
 
     reply.raw.end();
@@ -225,84 +244,4 @@ export async function chatRoutes(fastify: FastifyInstance) {
     const messages = store.getChatHistory(request.params.session_id);
     return reply.send({ session_id: request.params.session_id, messages, total: messages.length });
   });
-}
-
-// ─── Simulated Response Generator ──────────────────────────────────
-
-function generateSimulatedResponse(agentName: string, prompt: string): string {
-  const lowerPrompt = prompt.toLowerCase();
-
-  if (lowerPrompt.includes('code review') || lowerPrompt.includes('audit') || lowerPrompt.includes('security')) {
-    return `## Security Audit Report — ${agentName}\n\n` +
-      `I've completed the analysis of the codebase you provided. Here are my findings:\n\n` +
-      `### 🔴 Critical Issues (2)\n` +
-      `1. **SQL Injection Vulnerability** — Line 47: User input is directly concatenated into SQL query without parameterization. Use prepared statements.\n` +
-      `2. **Hardcoded API Key** — Line 112: API key \`sk-...xxxx\` is embedded in source code. Move to environment variables.\n\n` +
-      `### 🟡 Warnings (3)\n` +
-      `1. Missing rate limiting on authentication endpoints\n` +
-      `2. CORS wildcard (\`*\`) in production configuration\n` +
-      `3. No input validation on file upload handler\n\n` +
-      `### 🟢 Best Practices\n` +
-      `- Dependencies are up to date ✅\n` +
-      `- TypeScript strict mode enabled ✅\n` +
-      `- Error handling follows consistent patterns ✅\n\n` +
-      `**Overall Score: 7.2/10** — Fix critical issues before deployment.`;
-  }
-
-  if (lowerPrompt.includes('test') || lowerPrompt.includes('write test')) {
-    return `## Test Suite Generated — ${agentName}\n\n` +
-      '```typescript\nimport { describe, it, expect } from \'vitest\';\n\n' +
-      'describe(\'API Endpoints\', () => {\n' +
-      '  it(\'should return 200 on health check\', async () => {\n' +
-      '    const res = await fetch(\'/health\');\n' +
-      '    expect(res.status).toBe(200);\n' +
-      '  });\n\n' +
-      '  it(\'should create a new agent\', async () => {\n' +
-      '    const res = await fetch(\'/api/v1/agents/register\', {\n' +
-      '      method: \'POST\',\n' +
-      '      body: JSON.stringify({ agent_url: \'http://test:8001\' })\n' +
-      '    });\n' +
-      '    expect(res.status).toBe(200);\n' +
-      '  });\n' +
-      '});\n```\n\n' +
-      `Generated **2 test cases** covering health check and agent registration endpoints.`;
-  }
-
-  if (lowerPrompt.includes('hello') || lowerPrompt.includes('hi') || lowerPrompt.includes('hey')) {
-    return `Hello! 👋 I'm **${agentName}**, an autonomous AI agent on the Open Agent Network.\n\n` +
-      `I'm ready to help you with tasks like:\n` +
-      `- 🔍 **Code Review & Security Audits**\n` +
-      `- 📝 **Documentation Generation**\n` +
-      `- 🧪 **Test Suite Writing**\n` +
-      `- 🐛 **Bug Analysis & Debugging**\n\n` +
-      `Just describe your task and I'll get to work! My output is verified through the protocol before escrow release.`;
-  }
-
-  if (lowerPrompt.includes('explain') || lowerPrompt.includes('how') || lowerPrompt.includes('what')) {
-    return `Great question! Let me break this down:\n\n` +
-      `### How the A2A Protocol Works\n\n` +
-      `1. **Discovery** — Agents expose a manifest at \`/.well-known/agent-card.json\` describing their skills and pricing\n` +
-      `2. **Escrow Lock** — When you hire an agent, USDC is locked in the \`ACPEscrow.sol\` smart contract on Base Sepolia\n` +
-      `3. **Task Execution** — Your prompt is sent to the agent via JSON-RPC 2.0 (\`tasks/send\`)\n` +
-      `4. **Verification** — Output is verified through CI pass, TEE attestation, or multi-agent consensus\n` +
-      `5. **Payment Release** — 99% goes to the agent, 1% protocol fee\n\n` +
-      `This ensures trustless, automated payments for AI work without intermediaries.\n\n` +
-      `— *${agentName}*`;
-  }
-
-  // Default response
-  return `## Task Analysis — ${agentName}\n\n` +
-    `I've received your request and completed the analysis:\n\n` +
-    `**Input:** "${prompt.slice(0, 100)}${prompt.length > 100 ? '...' : ''}"\n\n` +
-    `### Results\n` +
-    `- Task complexity: **Medium**\n` +
-    `- Estimated execution time: **2.3 seconds**\n` +
-    `- Confidence score: **94.7%**\n\n` +
-    `The task has been processed and verified through the A2A protocol. ` +
-    `All outputs are immutably logged and available for audit.\n\n` +
-    `Need anything else? I'm here to help! 🚀`;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
