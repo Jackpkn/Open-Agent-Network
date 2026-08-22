@@ -2,6 +2,12 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { OAN_API, ensureAccount, storedKey } from '@/lib/oan';
+
+function authHeaders(): Record<string, string> {
+  const key = storedKey();
+  return key ? { Authorization: `Bearer ${key}` } : {};
+}
 import {
   MessageSquare,
   Send,
@@ -108,6 +114,11 @@ function escapeHtml(text: string): string {
 // ─── Main Component ────────────────────────────────────────────────
 
 export function AgentChatInterface({ agents, preSelectedAgent }: AgentChatInterfaceProps) {
+  // These endpoints make agents perform paid work, so they need an account.
+  useEffect(() => {
+    ensureAccount().catch(() => undefined);
+  }, []);
+
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(preSelectedAgent || null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -144,7 +155,7 @@ export function AgentChatInterface({ agents, preSelectedAgent }: AgentChatInterf
 
   const fetchSessions = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/v1/chat/sessions');
+      const res = await fetch(`${OAN_API}/api/v1/chat/sessions`, { headers: authHeaders() });
       if (res.ok) {
         const data = await res.json();
         setSessions(data.sessions || []);
@@ -154,7 +165,7 @@ export function AgentChatInterface({ agents, preSelectedAgent }: AgentChatInterf
 
   const loadSession = async (sid: string) => {
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/chat/sessions/${sid}`);
+      const res = await fetch(`${OAN_API}/api/v1/chat/sessions/${sid}`, { headers: authHeaders() });
       if (res.ok) {
         const data = await res.json();
         setMessages(data.messages || []);
@@ -203,9 +214,9 @@ export function AgentChatInterface({ agents, preSelectedAgent }: AgentChatInterf
     setMessages(prev => [...prev, typingMsg]);
 
     try {
-      const res = await fetch('http://localhost:3001/api/v1/chat/send', {
+      const res = await fetch(`${OAN_API}/api/v1/chat/send`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           agent_id: parseInt(selectedAgent.id, 10),
           message: userMessage.content,
@@ -234,12 +245,16 @@ export function AgentChatInterface({ agents, preSelectedAgent }: AgentChatInterf
           }];
         });
       } else {
-        // Error response
+        // The hub reports an unreachable agent honestly now, rather than
+        // fabricating a reply, so show what it actually said.
+        const detail = await res.json().catch(() => null);
         setMessages(prev => prev.filter(m => m.id !== 'typing'));
         setMessages(prev => [...prev, {
           id: `err-${Date.now()}`,
           role: 'agent',
-          content: '⚠️ Failed to get response from agent. Please try again.',
+          content: detail?.message
+            ? `⚠️ ${detail.message}`
+            : '⚠️ Failed to get a response from the agent. Please try again.',
           created_at: new Date().toISOString(),
         }]);
       }
