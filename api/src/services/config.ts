@@ -86,6 +86,16 @@ export const config = {
    */
   adminKey: (process.env.OAN_ADMIN_KEY || null) as string | null,
 
+  /**
+   * Allow the legacy agent-to-agent endpoints to be called without credentials.
+   *
+   * Those endpoints make registered agents perform work. While every agent was a
+   * deterministic toy that cost nothing; with a model-backed agent registered it
+   * is a way for anyone who can reach the port to spend the operator's API
+   * budget. Closed by default; enable only on a machine nobody else can reach.
+   */
+  allowAnonymousLegacy: process.env.OAN_ALLOW_ANONYMOUS_LEGACY === 'true',
+
   /** Base URL workers call back on. Must be reachable from the agent's network. */
   publicUrl: (process.env.OAN_PUBLIC_URL || 'http://localhost:3001').replace(/\/$/, ''),
 };
@@ -136,6 +146,14 @@ export function diagnose(
     );
   }
 
+  if (settings.allowAnonymousLegacy) {
+    warnings.push(
+      'OAN_ALLOW_ANONYMOUS_LEGACY=true. Anyone who can reach this port can make your registered agents ' +
+        'perform work without an account, including agents that call a paid model API. Only use this on a ' +
+        'machine nobody else can reach.'
+    );
+  }
+
   if (settings.escrowMode === 'onchain') {
     warnings.push(
       'OAN_ESCROW_MODE=onchain is set, but on-chain settlement is not implemented. Jobs will settle on the ' +
@@ -152,6 +170,7 @@ export function diagnose(
       signing_key: ephemeralSecret ? 'ephemeral (development)' : 'configured',
       arbitration: settings.adminKey ? 'enabled' : 'disabled (no OAN_ADMIN_KEY)',
       settlement: settings.escrowMode === 'onchain' ? 'onchain (not implemented)' : 'internal ledger',
+      legacy_endpoints: settings.allowAnonymousLegacy ? 'OPEN to anonymous callers' : 'require an account',
       max_upload_mb: Math.round(settings.maxUploadBytes / 1048576),
       heartbeat_timeout_s: settings.heartbeatTimeoutSeconds,
       acceptance_window_s: settings.acceptanceWindowSeconds,
